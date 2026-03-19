@@ -1799,6 +1799,8 @@ let _sessionCountdown = null;
 
 function authInit() {
   const overlay = document.getElementById('auth-overlay');
+  // Önce her zaman overlay'i göster, sonra session varsa gizle
+  overlay.style.display = 'block';
   if (FinansAuth.needsSetup()) {
     overlay.style.display = 'block';
     document.getElementById('auth-setup').style.display = 'block';
@@ -1870,6 +1872,18 @@ async function doLogin() {
 function authSuccess(session) {
   document.getElementById('auth-overlay').style.display = 'none';
   document.getElementById('session-timer').style.display = 'flex';
+  // Shell'i görünür yap
+  const shell = document.querySelector('.shell');
+  if(shell) shell.style.visibility='visible';
+  // Dashboard'u başlat
+  initDash();
+  // Kripto fiyatları çek
+  const allIds=[...new Set([...cryptoPortfolio.map(c=>c.cgId),...bncPortfolio.map(c=>c.cgId)])];
+  fetchCryptoPrices(allIds).then(prices=>{
+    cryptoPortfolio.forEach(c=>{if(prices[c.cgId])c.price=prices[c.cgId].try||prices[c.cgId].usd*usdTry;});
+    bncPortfolio.forEach(c=>{if(prices[c.cgId])c.price=prices[c.cgId].usd;});
+    updateDashCrypto();
+  });
   // Kullanıcı adı + rol göster
   const uEl = document.getElementById('session-username');
   if (uEl) uEl.innerHTML = `<span style="font-size:12px">👤</span> <strong style="color:var(--text);font-size:11.5px">${session.username}</strong> ${session.role==='admin'?'<span style="font-size:9.5px;padding:1px 5px;border-radius:3px;background:var(--accent-dim);color:var(--accent)">admin</span>':''}`;
@@ -2011,12 +2025,15 @@ async function doChangePass() {
 
 // ═══ INIT ═══
 document.addEventListener('DOMContentLoaded',()=>{
+  // Shell'i gizle — auth geçilene kadar içerik görünmemeli
+  const shell = document.querySelector('.shell');
+  if(shell) shell.style.visibility='hidden';
   loadData();
   initGoogleAuth();
-  authInit();              // ← Auth katmanını başlat
+  authInit();
   setInterval(saveData, 30000);
-  initDash();
-  // pre-fetch crypto
-  const allIds=[...new Set([...cryptoPortfolio.map(c=>c.cgId),...bncPortfolio.map(c=>c.cgId)])];
-  fetchCryptoPrices(allIds).then(prices=>{
-    cryptoPortf
+  // initDash ve kripto fetch artık authSuccess() içinde çağrılıyor
+});
+</script>
+</body>
+</html>
