@@ -1100,34 +1100,54 @@ function setTheme(t) {
 
 // ═══ CUSTOM CONFIRM MODAL ═══
 let _confirmResolve = null;
+let _confirmKeyHandler = null;
 
-function showConfirm({ title, msg, detail='', icon='⚠', variant='danger', okLabel='Onayla' } = {}) {
+// Butonları bir kez DOM hazır olunca bağla
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('confirm-ok-btn').addEventListener('click', () => _resolveConfirm(true));
+  document.getElementById('confirm-cancel-btn').addEventListener('click', () => _resolveConfirm(false));
+  document.getElementById('confirm-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('confirm-overlay')) _resolveConfirm(false);
+  });
+});
+
+function _resolveConfirm(val) {
+  const ov = document.getElementById('confirm-overlay');
+  ov.style.display = 'none';
+  if (_confirmKeyHandler) {
+    document.removeEventListener('keydown', _confirmKeyHandler);
+    _confirmKeyHandler = null;
+  }
+  if (_confirmResolve) { _confirmResolve(val); _confirmResolve = null; }
+}
+
+// Global alias — HTML'den de çağrılabilir
+function confirmResolve(val) { _resolveConfirm(val); }
+
+function showConfirm({ title='', msg='', detail='', icon='⚠', variant='danger', okLabel='Evet, Sil' } = {}) {
   return new Promise(resolve => {
     _confirmResolve = resolve;
-    const ov = document.getElementById('confirm-overlay');
+
     document.getElementById('confirm-title').textContent  = title;
     document.getElementById('confirm-msg').textContent    = msg;
     document.getElementById('confirm-icon').textContent   = icon;
     document.getElementById('confirm-ok-btn').textContent = okLabel;
-    const det = document.getElementById('confirm-detail');
-    if (detail) { det.textContent = detail; det.style.display = 'block'; }
-    else         { det.style.display = 'none'; }
-    ov.className = `variant-${variant}`;
-    ov.style.display = 'flex';
-    requestAnimationFrame(() => ov.classList.add('show'));
-    // ESC ile kapat
-    const onKey = e => { if(e.key === 'Escape') { confirmResolve(false); document.removeEventListener('keydown', onKey); } };
-    document.addEventListener('keydown', onKey);
-    // Overlay dışına tık
-    ov.onclick = e => { if(e.target === ov) confirmResolve(false); };
-  });
-}
 
-function confirmResolve(val) {
-  const ov = document.getElementById('confirm-overlay');
-  ov.style.display = 'none';
-  ov.onclick = null;
-  if (_confirmResolve) { _confirmResolve(val); _confirmResolve = null; }
+    const det = document.getElementById('confirm-detail');
+    det.textContent    = detail;
+    det.style.display  = detail ? 'block' : 'none';
+
+    // Renk varyantı
+    const ov = document.getElementById('confirm-overlay');
+    ov.className = 'variant-' + variant;
+
+    // Göster
+    ov.style.display = 'flex';
+
+    // ESC
+    _confirmKeyHandler = e => { if (e.key === 'Escape') _resolveConfirm(false); };
+    document.addEventListener('keydown', _confirmKeyHandler);
+  });
 }
 
 // ═══════════════════════════════════════════════════════
