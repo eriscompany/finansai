@@ -53,7 +53,7 @@ input:focus,select:focus{border-color:var(--accent);}
 select option{background:var(--bg3);}
 ::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px;}
 
-.shell{display:flex;min-height:100vh;}
+.shell{display:none;min-height:100vh;}
 .sidebar{width:215px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:200;overflow-y:auto;}
 .slogo{padding:16px 14px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
 [data-theme=light] .slogo-mark{filter:none;}
@@ -217,7 +217,7 @@ select option{background:var(--bg3);}
 <!-- ═══════════════════════════════════════════════════════
      AUTH OVERLAY — Login / Setup / Session Guard
 ════════════════════════════════════════════════════════ -->
-<div id="auth-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:var(--bg);overflow-y:auto;font-family:var(--font)">
+<div id="auth-overlay" style="display:block;position:fixed;inset:0;z-index:99999;background:var(--bg);overflow-y:auto;font-family:var(--font)">
 
   <!-- SETUP WIZARD (ilk kurulum) -->
   <div id="auth-setup" style="display:none;max-width:440px;margin:0 auto;padding:60px 24px 40px">
@@ -1798,23 +1798,26 @@ let _sessionCheckInterval = null;
 let _sessionCountdown = null;
 
 function authInit() {
-  const overlay = document.getElementById('auth-overlay');
-  // Önce her zaman overlay'i göster, sonra session varsa gizle
-  overlay.style.display = 'block';
+  // overlay zaten HTML'de display:block — hiçbir şey yapmasak da görünür
+  // shell zaten CSS'de display:none — authSuccess'e kadar gizli
   if (FinansAuth.needsSetup()) {
-    overlay.style.display = 'block';
+    // İlk kurulum: setup wizard göster
     document.getElementById('auth-setup').style.display = 'block';
-    document.getElementById('auth-login').style.display = 'none';
+    document.getElementById('auth-login').style.display  = 'none';
     setupStrengthMeter();
   } else {
     const session = FinansAuth.getSession();
     if (session) {
+      // Geçerli session: direkt uygulama
       authSuccess(session);
     } else {
-      overlay.style.display = 'block';
+      // Session yok: login göster
       document.getElementById('auth-setup').style.display = 'none';
-      document.getElementById('auth-login').style.display = 'block';
-      setTimeout(()=>document.getElementById('login-user').focus(), 100);
+      document.getElementById('auth-login').style.display  = 'block';
+      setTimeout(() => {
+        const loginUser = document.getElementById('login-user');
+        if(loginUser) loginUser.focus();
+      }, 150);
     }
   }
 }
@@ -1874,7 +1877,7 @@ function authSuccess(session) {
   document.getElementById('session-timer').style.display = 'flex';
   // Shell'i görünür yap
   const shell = document.querySelector('.shell');
-  if(shell) shell.style.visibility='visible';
+  if(shell){ shell.style.display='flex'; shell.style.visibility='visible'; }
   // Dashboard'u başlat
   initDash();
   // Kripto fiyatları çek
@@ -1898,6 +1901,9 @@ function doLogout() {
   clearInterval(_sessionCheckInterval);
   clearInterval(_sessionCountdown);
   document.getElementById('session-timer').style.display = 'none';
+  // Shell'i gizle
+  const logoutShell = document.querySelector('.shell');
+  if(logoutShell){ logoutShell.style.display='none'; }
   document.getElementById('auth-overlay').style.display = 'block';
   document.getElementById('auth-setup').style.display = 'none';
   document.getElementById('auth-login').style.display = 'block';
@@ -2025,9 +2031,14 @@ async function doChangePass() {
 
 // ═══ INIT ═══
 document.addEventListener('DOMContentLoaded',()=>{
-  // Shell'i gizle — auth geçilene kadar içerik görünmemeli
-  const shell = document.querySelector('.shell');
-  if(shell) shell.style.visibility='hidden';
+  // Uygulama versiyonu — değişince eski session otomatik temizlenir
+  const APP_VERSION = 'finansai-v3.1';
+  if(localStorage.getItem('_fa_ver') !== APP_VERSION){
+    // Eski session varsa sil (version değişmiş)
+    localStorage.removeItem('_fa_s7m3p');
+    localStorage.setItem('_fa_ver', APP_VERSION);
+  }
+  // Shell başta CSS'de display:none — authSuccess'te açılıyor
   loadData();
   initGoogleAuth();
   authInit();
