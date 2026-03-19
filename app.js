@@ -116,7 +116,7 @@ function showPage(id){
   const el=document.querySelector(`[data-page="${id}"]`); if(el) el.classList.add('active');
   ({dashboard:initDash,watchlist:initWatch,transactions:initTx,banks:initBanks,
     investments:initInv,crypto:initCrypto,bills:initBills,budget:initBudget,
-    forecast:initForecast,ai:initAI,add:initAdd}[id]||function(){})();
+    forecast:initForecast,ai:initAI,add:initAdd,settings:initSettings}[id]||function(){})();
 }
 document.querySelectorAll('.ni').forEach(el=>el.addEventListener('click',()=>showPage(el.dataset.page)));
 
@@ -957,8 +957,119 @@ function initAdd(){document.getElementById('a-dt').value=new Date().toISOString(
 function saveTx(){const s=document.getElementById('save-ok');s.style.display='block';setTimeout(()=>s.style.display='none',2000);saveData();showNotif('Kaydedildi','✓');}
 function simCSV(){document.getElementById('csv-res').textContent='⏳ 312 işlem okunuyor...';setTimeout(()=>{document.getElementById('csv-res').textContent='✓ 312 işlem aktarıldı.';},1400);}
 
-// ═══════════════════════════════════════════════════════
-// GOOGLE CALENDAR OAUTH (GitHub Pages Edition)
+// ═══ SETTINGS ═══
+function initSettings() {
+  refreshSettingsCounts();
+  // Depolama boyutu
+  try {
+    let total = 0;
+    for (const k in localStorage) {
+      if (localStorage.hasOwnProperty(k)) total += (localStorage[k].length + k.length) * 2;
+    }
+    const kb = (total / 1024).toFixed(1);
+    document.getElementById('storage-size').textContent = kb + ' KB';
+  } catch(e) {}
+  // Son kayıt zamanı
+  const ts = localStorage.getItem('finansai_last_save');
+  document.getElementById('last-save-time').textContent = ts
+    ? new Date(parseInt(ts)).toLocaleTimeString('tr-TR', {hour:'2-digit',minute:'2-digit'})
+    : '—';
+}
+
+function refreshSettingsCounts() {
+  const income  = allTx.filter(t => t.type === 'gelir').length;
+  const expense = allTx.filter(t => t.type === 'gider').length;
+  document.getElementById('count-transactions').textContent  = allTx.length + ' kayıt';
+  document.getElementById('count-income').textContent        = income + ' kayıt';
+  document.getElementById('count-expense').textContent       = expense + ' kayıt';
+  document.getElementById('count-banks').textContent         = bankAccs.length + ' hesap';
+  document.getElementById('count-investments').textContent   = investments.length + ' hesap';
+  document.getElementById('count-crypto').textContent        = cryptoPortfolio.length + ' coin';
+  document.getElementById('count-bnc').textContent           = bncPortfolio.length + ' coin';
+  document.getElementById('count-bills').textContent         = bills.length + ' fatura';
+  document.getElementById('count-budgets').textContent       = budgets.length + ' kalem';
+  document.getElementById('count-installments').textContent  = installments.length + ' taksit';
+  document.getElementById('count-watch').textContent         = watchItems.length + ' varlık';
+}
+
+function clearData(type) {
+  const labels = {
+    transactions:  'Tüm işlemler',
+    income:        'Gelir işlemleri',
+    expense:       'Gider işlemleri',
+    banks:         'Banka hesapları',
+    investments:   'Yatırım hesapları',
+    crypto:        'Kripto portföy',
+    bnc:           'Binance portföy',
+    bills:         'Faturalar',
+    budgets:       'Bütçe kalemleri',
+    installments:  'Taksitler',
+    watch:         'Favoriler',
+    all:           'TÜM VERİLER',
+  };
+  const label = labels[type] || type;
+  if (!confirm(`"${label}" silinecek. Bu işlem geri alınamaz!\n\nDevam etmek istiyor musunuz?`)) return;
+
+  switch(type) {
+    case 'transactions':
+      allTx.splice(0, allTx.length);
+      break;
+    case 'income':
+      const toRemI = allTx.filter(t => t.type === 'gelir').map(t => t.id);
+      toRemI.forEach(id => { const i = allTx.findIndex(t=>t.id===id); if(i>-1) allTx.splice(i,1); });
+      break;
+    case 'expense':
+      const toRemE = allTx.filter(t => t.type === 'gider').map(t => t.id);
+      toRemE.forEach(id => { const i = allTx.findIndex(t=>t.id===id); if(i>-1) allTx.splice(i,1); });
+      break;
+    case 'banks':
+      bankAccs.splice(0, bankAccs.length);
+      break;
+    case 'investments':
+      investments.splice(0, investments.length);
+      break;
+    case 'crypto':
+      cryptoPortfolio.splice(0, cryptoPortfolio.length);
+      break;
+    case 'bnc':
+      bncPortfolio.splice(0, bncPortfolio.length);
+      break;
+    case 'bills':
+      bills.splice(0, bills.length);
+      break;
+    case 'budgets':
+      budgets.splice(0, budgets.length);
+      break;
+    case 'installments':
+      installments.splice(0, installments.length);
+      break;
+    case 'watch':
+      watchItems.splice(0, watchItems.length);
+      break;
+    case 'all':
+      allTx.splice(0, allTx.length);
+      bankAccs.splice(0, bankAccs.length);
+      investments.splice(0, investments.length);
+      cryptoPortfolio.splice(0, cryptoPortfolio.length);
+      bncPortfolio.splice(0, bncPortfolio.length);
+      bills.splice(0, bills.length);
+      budgets.splice(0, budgets.length);
+      installments.splice(0, installments.length);
+      watchItems.splice(0, watchItems.length);
+      monthlyData = {};
+      break;
+  }
+
+  saveData();
+  refreshSettingsCounts();
+  showNotif(label + ' temizlendi', '🗑');
+}
+
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : '');
+  document.getElementById('theme-dark-btn').style.background  = t !== 'light' ? 'var(--accent-dim)' : '';
+  document.getElementById('theme-light-btn').style.background = t === 'light' ? 'var(--accent-dim)' : '';
+}
 // ═══════════════════════════════════════════════════════
 const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE'; // Google Cloud Console'dan al
 const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
@@ -1045,6 +1156,8 @@ function saveData() {
     localStorage.setItem('finansai_bnc', JSON.stringify(bncPortfolio));
     localStorage.setItem('finansai_monthly', JSON.stringify(monthlyData));
     localStorage.setItem('finansai_watch', JSON.stringify(watchItems));
+    localStorage.setItem('finansai_transactions', JSON.stringify(allTx));
+    localStorage.setItem('finansai_last_save', Date.now().toString());
   } catch(e) { console.warn('localStorage save failed:', e); }
 }
 
@@ -1058,6 +1171,7 @@ function loadData() {
     const bn = localStorage.getItem('finansai_bnc'); if(bn) bncPortfolio.splice(0, bncPortfolio.length, ...JSON.parse(bn));
     const md = localStorage.getItem('finansai_monthly'); if(md) Object.assign(monthlyData, JSON.parse(md));
     const wa = localStorage.getItem('finansai_watch'); if(wa) watchItems.splice(0, watchItems.length, ...JSON.parse(wa));
+    const tx = localStorage.getItem('finansai_transactions'); if(tx) allTx.splice(0, allTx.length, ...JSON.parse(tx));
   } catch(e) { console.warn('localStorage load failed:', e); }
 }
 

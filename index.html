@@ -396,6 +396,7 @@
     <div class="snav-grp">Araçlar</div>
     <div class="ni" data-page="ai"><span class="ni-icon">✦</span><span>AI Danışman</span></div>
     <div class="ni" data-page="add"><span class="ni-icon">＋</span><span>Giriş Ekle</span></div>
+    <div class="ni" data-page="settings"><span class="ni-icon">⚙</span><span>Ayarlar</span></div>
   </nav>
   <div class="sfoot">
     <button class="fb active" id="btn-tr" onclick="setLang('tr')">TR</button>
@@ -805,6 +806,138 @@
     <div class="card"><div class="ct">CSV Import</div>
       <div class="upzone" onclick="simCSV()" style="padding:18px"><div style="font-size:20px;margin-bottom:4px">📊</div><div style="font-size:12.5px;color:var(--text2)">CSV Yükle</div></div>
       <div id="csv-res" style="margin-top:6px;font-size:12px;color:var(--teal)"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="topbar"><div><h1>Ayarlar</h1><p>Veri yönetimi ve uygulama tercihleri</p></div></div>
+
+  <!-- VERİ TEMİZLEME -->
+  <div class="card" style="margin-bottom:13px">
+    <div class="ct">⚠️ Veri Temizleme</div>
+    <p style="font-size:12.5px;color:var(--text3);margin-bottom:14px;line-height:1.7">
+      Aşağıdaki butonlar seçili veri grubunu kalıcı olarak siler. Bu işlem geri alınamaz.
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px" id="clear-btns-grid">
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">⇅</div>
+        <div class="settings-clear-label">Tüm İşlemler</div>
+        <div class="settings-clear-sub" id="count-transactions">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('transactions')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">📈</div>
+        <div class="settings-clear-label">Sadece Gelirler</div>
+        <div class="settings-clear-sub" id="count-income">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('income')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">📉</div>
+        <div class="settings-clear-label">Sadece Giderler</div>
+        <div class="settings-clear-sub" id="count-expense">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('expense')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">🏦</div>
+        <div class="settings-clear-label">Banka Hesapları</div>
+        <div class="settings-clear-sub" id="count-banks">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('banks')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">📊</div>
+        <div class="settings-clear-label">Yatırım Hesapları</div>
+        <div class="settings-clear-sub" id="count-investments">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('investments')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">₿</div>
+        <div class="settings-clear-label">Kripto Portföy</div>
+        <div class="settings-clear-sub" id="count-crypto">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('crypto')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">🟡</div>
+        <div class="settings-clear-label">Binance Portföy</div>
+        <div class="settings-clear-sub" id="count-bnc">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('bnc')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">📄</div>
+        <div class="settings-clear-label">Faturalar</div>
+        <div class="settings-clear-sub" id="count-bills">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('bills')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">◎</div>
+        <div class="settings-clear-label">Bütçe Kalemleri</div>
+        <div class="settings-clear-sub" id="count-budgets">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('budgets')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">📅</div>
+        <div class="settings-clear-label">Taksitler</div>
+        <div class="settings-clear-sub" id="count-installments">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('installments')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card">
+        <div class="settings-clear-icon">⭐</div>
+        <div class="settings-clear-label">Favoriler (Watchlist)</div>
+        <div class="settings-clear-sub" id="count-watch">— kayıt</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('watch')">Temizle</button>
+      </div>
+
+      <div class="settings-clear-card" style="border-color:rgba(255,68,102,0.35);background:var(--red-dim)">
+        <div class="settings-clear-icon">🗑</div>
+        <div class="settings-clear-label" style="color:var(--red)">TÜM VERİLER</div>
+        <div class="settings-clear-sub">Sıfırdan başla</div>
+        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px;font-weight:700" onclick="clearData('all')">Hepsini Sil</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- GÖRÜNÜM -->
+  <div class="g2">
+    <div class="card">
+      <div class="ct">Görünüm</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:13px">Tema</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn bghost bsm" onclick="setTheme('dark')" id="theme-dark-btn">🌙 Koyu</button>
+          <button class="btn bghost bsm" onclick="setTheme('light')" id="theme-light-btn">☀️ Açık</button>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
+        <span style="font-size:13px">Dil</span>
+        <div style="display:flex;gap:6px">
+          <button class="btn bghost bsm" onclick="setLang('tr')" id="lang-tr-btn2">🇹🇷 Türkçe</button>
+          <button class="btn bghost bsm" onclick="setLang('en')" id="lang-en-btn2">🇬🇧 English</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Uygulama Bilgisi</div>
+      <div style="font-size:12.5px;color:var(--text2);line-height:2">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Versiyon</span><span style="font-family:var(--mono)">FinansAI v3.1</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Depolama</span><span style="font-family:var(--mono)" id="storage-size">—</span></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Son kayıt</span><span style="font-family:var(--mono)" id="last-save-time">—</span></div>
+      </div>
+      <div class="div"></div>
+      <button class="btn bghost bsm" style="width:100%" onclick="saveData();showNotif('Manuel kayıt yapıldı','💾')">💾 Manuel Kaydet</button>
     </div>
   </div>
 </div>
