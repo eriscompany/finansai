@@ -947,6 +947,26 @@
 
 <div class="notif" id="notif"><span id="n-icon">✓</span><span id="n-txt"></span></div>
 
+<!-- CUSTOM CONFIRM MODAL -->
+<div id="confirm-overlay" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div id="confirm-box" style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:24px 26px;min-width:320px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:fi .18s ease;">
+    <div style="display:flex;align-items:flex-start;gap:13px;margin-bottom:18px">
+      <div id="confirm-icon-wrap" style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--red-dim)">
+        <span id="confirm-icon">🗑</span>
+      </div>
+      <div>
+        <div id="confirm-title" style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px"></div>
+        <div id="confirm-msg" style="font-size:13px;color:var(--text3);line-height:1.65"></div>
+      </div>
+    </div>
+    <div id="confirm-detail" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:9px 12px;margin-bottom:18px;font-size:12px;color:var(--text2);display:none"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn bghost" style="min-width:80px" onclick="confirmResolve(false)">İptal</button>
+      <button id="confirm-ok-btn" class="btn bdanger2" style="min-width:100px;font-weight:600" onclick="confirmResolve(true)">Sil</button>
+    </div>
+  </div>
+</div>
+
 <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script>
 <script src="app.js"></script>
 </body>

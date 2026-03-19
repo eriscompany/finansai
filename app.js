@@ -992,7 +992,7 @@ function refreshSettingsCounts() {
   document.getElementById('count-watch').textContent         = watchItems.length + ' varlık';
 }
 
-function clearData(type) {
+async function clearData(type) {
   const labels = {
     transactions:  'Tüm işlemler',
     income:        'Gelir işlemleri',
@@ -1007,8 +1007,35 @@ function clearData(type) {
     watch:         'Favoriler',
     all:           'TÜM VERİLER',
   };
+  const icons = {
+    transactions:'⇅', income:'📈', expense:'📉', banks:'🏦',
+    investments:'📊', crypto:'₿', bnc:'🟡', bills:'📄',
+    budgets:'◎', installments:'📅', watch:'⭐', all:'🗑'
+  };
+  const counts = {
+    transactions: allTx.length + ' kayıt',
+    income:       allTx.filter(t=>t.type==='gelir').length + ' kayıt',
+    expense:      allTx.filter(t=>t.type==='gider').length + ' kayıt',
+    banks:        bankAccs.length + ' hesap',
+    investments:  investments.length + ' hesap',
+    crypto:       cryptoPortfolio.length + ' coin',
+    bnc:          bncPortfolio.length + ' coin',
+    bills:        bills.length + ' fatura',
+    budgets:      budgets.length + ' kalem',
+    installments: installments.length + ' taksit',
+    watch:        watchItems.length + ' varlık',
+    all:          'Tüm veriler',
+  };
   const label = labels[type] || type;
-  if (!confirm(`"${label}" silinecek. Bu işlem geri alınamaz!\n\nDevam etmek istiyor musunuz?`)) return;
+  const ok = await showConfirm({
+    title: `"${label}" silinecek`,
+    msg: 'Bu işlem geri alınamaz. Silinen veriler kurtarılamaz.',
+    detail: counts[type],
+    icon: icons[type] || '🗑',
+    variant: type === 'all' ? 'danger' : 'danger',
+    okLabel: type === 'all' ? '⚠ Hepsini Sil' : 'Evet, Sil',
+  });
+  if (!ok) return;
 
   switch(type) {
     case 'transactions':
@@ -1070,6 +1097,41 @@ function setTheme(t) {
   document.getElementById('theme-dark-btn').style.background  = t !== 'light' ? 'var(--accent-dim)' : '';
   document.getElementById('theme-light-btn').style.background = t === 'light' ? 'var(--accent-dim)' : '';
 }
+
+// ═══ CUSTOM CONFIRM MODAL ═══
+let _confirmResolve = null;
+
+function showConfirm({ title, msg, detail='', icon='⚠', variant='danger', okLabel='Onayla' } = {}) {
+  return new Promise(resolve => {
+    _confirmResolve = resolve;
+    const ov = document.getElementById('confirm-overlay');
+    document.getElementById('confirm-title').textContent  = title;
+    document.getElementById('confirm-msg').textContent    = msg;
+    document.getElementById('confirm-icon').textContent   = icon;
+    document.getElementById('confirm-ok-btn').textContent = okLabel;
+    const det = document.getElementById('confirm-detail');
+    if (detail) { det.textContent = detail; det.style.display = 'block'; }
+    else         { det.style.display = 'none'; }
+    ov.className = `variant-${variant}`;
+    ov.style.display = 'flex';
+    requestAnimationFrame(() => ov.classList.add('show'));
+    // ESC ile kapat
+    const onKey = e => { if(e.key === 'Escape') { confirmResolve(false); document.removeEventListener('keydown', onKey); } };
+    document.addEventListener('keydown', onKey);
+    // Overlay dışına tık
+    ov.onclick = e => { if(e.target === ov) confirmResolve(false); };
+  });
+}
+
+function confirmResolve(val) {
+  const ov = document.getElementById('confirm-overlay');
+  ov.style.display = 'none';
+  ov.onclick = null;
+  if (_confirmResolve) { _confirmResolve(val); _confirmResolve = null; }
+}
+
+// ═══════════════════════════════════════════════════════
+// GOOGLE CALENDAR OAUTH (GitHub Pages Edition)
 // ═══════════════════════════════════════════════════════
 const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE'; // Google Cloud Console'dan al
 const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
@@ -1504,9 +1566,16 @@ async function addUser() {
   } catch(e) { err.textContent = e.message; }
 }
 
-function removeUser(username) {
+async function removeUser(username) {
   const s = FinansAuth.getSession(); if(!s) return;
-  if (!confirm(`"${username}" kullanıcısını silmek istediğinizden emin misiniz?`)) return;
+  const ok = await showConfirm({
+    title: `"${username}" silinecek`,
+    msg: 'Bu kullanıcı kalıcı olarak silinecek. Bu işlem geri alınamaz.',
+    icon: '👤',
+    variant: 'danger',
+    okLabel: 'Kullanıcıyı Sil',
+  });
+  if (!ok) return;
   try {
     FinansAuth.deleteUser(username, s.username);
     renderUserList();
