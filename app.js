@@ -145,11 +145,13 @@ const cgToBinance = {
   'terra-luna-classic':'LUNCUSDT', cardano:'ADAUSDT', dogecoin:'DOGEUSDT',
   polkadot:'DOTUSDT', avalanche:'AVAXUSDT', chainlink:'LINKUSDT',
   litecoin:'LTCUSDT', 'shiba-inu':'SHIBUSDT', matic:'MATICUSDT',
-  kaspa:'KASUSDT', tron:'TRXUSDT', toncoin:'TONUSDT'
+  kaspa:'KASUSDT', tron:'TRXUSDT', toncoin:'TONUSDT',
+  'sonic-3':'SUSDT'
 };
 
 async function fetchCryptoPrices(ids){
-  if(Date.now()-lastFetch < 30000 && Object.keys(cryptoPrices).length > 0) return cryptoPrices;
+  const allCached = ids.every(id=>cryptoPrices[id]!==undefined);
+  if(Date.now()-lastFetch < 30000 && allCached) return cryptoPrices;
   try {
     const fxResp = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTTRY');
     if(fxResp.ok){ const fx=await fxResp.json(); if(fx.price) usdTry=parseFloat(fx.price); }
@@ -674,6 +676,7 @@ const COIN_LIST = [
   {id:'nervos-network',sym:'CKB',name:'Nervos Network',icon:'⚫'},
   {id:'wax',sym:'WAXP',name:'WAX',icon:'🟡'},
   {id:'xdc-network',sym:'XDC',name:'XDC Network',icon:'🔵'},
+  {id:'sonic-3',sym:'S',name:'Sonic (eski Fantom)',icon:'👻'},
 ];
 
 let bncSelectedCoin = null;
@@ -700,7 +703,8 @@ async function selectBncCoin(id,sym,name,icon){
   const p=prices[id];
   if(p){
     bncSelectedCoin.usdPrice=p.usd;
-    document.getElementById('bnc-buy').value=p.usd.toFixed(4);
+    const decimals1=p.usd<0.001?8:p.usd<0.1?6:p.usd<1?4:2;
+    document.getElementById('bnc-buy').value=p.usd.toFixed(decimals1);
     calcBncValue();
   }
 }
@@ -757,9 +761,10 @@ async function selectAddCoin(id,sym,name,icon){
         <span style="font-size:22px">${icon}</span>
         <div><div style="font-size:15px;font-weight:500">${sym}</div><div style="font-size:11px;color:var(--text3)">${name}</div></div>
       </div>
-      <div style="font-family:var(--mono);font-size:18px;color:var(--teal)">$${p.usd.toFixed(4)} · ${fmt(p.usd*usdTry)}</div>
+      <div style="font-family:var(--mono);font-size:18px;color:var(--teal)">$${p.usd<0.001?p.usd.toFixed(8):p.usd<0.1?p.usd.toFixed(6):p.usd<1?p.usd.toFixed(4):p.usd.toFixed(2)} · ${fmt(p.usd*usdTry)}</div>
       <div style="font-size:11.5px;color:${p.usd_24h_change>=0?'var(--teal)':'var(--red)'};margin-top:3px">24s: ${p.usd_24h_change>=0?'+':''}${(p.usd_24h_change||0).toFixed(2)}%</div>`;
-    document.getElementById('new-coin-buy').value=p.usd.toFixed(4);
+    const decimals2=p.usd<0.001?8:p.usd<0.1?6:p.usd<1?4:2;
+    document.getElementById('new-coin-buy').value=p.usd.toFixed(decimals2);
     calcNewCoinValue();
   }
 }
