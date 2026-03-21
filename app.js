@@ -64,11 +64,7 @@ let cryptoPortfolio = [
   {id:4,cgId:"solana",sym:"SOL",name:"Solana",qty:5,buy:4800,price:null,exch:"Binance",icon:"◎"},
 ];
 
-let bncPortfolio = [
-  {id:1,cgId:"ripple",sym:"XRP",qty:500,buy:1.34,price:null,icon:"✕"},
-  {id:2,cgId:"ethereum",sym:"ETH",qty:0.2,buy:2890,price:null,icon:"Ξ"},
-  {id:3,cgId:"solana",sym:"SOL",name:"Solana",qty:5,buy:125,price:null,icon:"◎"},
-];
+let bncPortfolio = [];
 
 let bills = [
   {id:1,name:"Doğalgaz",amount:420,due:"2026-03-22",icon:"🔥",calId:"bosms2k64rsneglg35u21mvct4"},
@@ -126,7 +122,7 @@ function switchBTab(t){
 }
 function switchCTab(t){
   document.querySelectorAll('[data-ctab]').forEach(e=>e.classList.toggle('active',e.dataset.ctab===t));
-  ['portfolio','binance','add-coin'].forEach(k=>document.getElementById('ct-'+k).style.display=k===t?'block':'none');
+  ['portfolio','add-coin'].forEach(k=>document.getElementById('ct-'+k).style.display=k===t?'block':'none');
 }
 function switchFTab(t){
   document.querySelectorAll('[data-ftab]').forEach(e=>e.classList.toggle('active',e.dataset.ftab===t));
@@ -194,10 +190,9 @@ async function refreshCrypto(){
   const allIds=[...new Set([...cryptoPortfolio.map(c=>c.cgId),...bncPortfolio.map(c=>c.cgId)])];
   const prices = await fetchCryptoPrices(allIds);
   cryptoPortfolio.forEach(c=>{ if(prices[c.cgId]) c.price=prices[c.cgId].try||prices[c.cgId].usd*usdTry; });
-  bncPortfolio.forEach(c=>{ if(prices[c.cgId]) c.price=prices[c.cgId].usd; });
+  // bncPortfolio kaldırıldı
   document.getElementById('refresh-btn').textContent='↻ Yenile';
   renderCryptoPortfolio();
-  renderBncPortfolio();
   updateDashCrypto();
 }
 
@@ -494,7 +489,6 @@ function selectFund(code,name,price){
 // ═══ CRYPTO ═══
 function initCrypto(){
   renderCryptoPortfolio();
-  renderBncPortfolio();
   refreshCrypto();
 }
 function renderCryptoPortfolio(){
@@ -531,29 +525,7 @@ function renderCryptoPortfolio(){
     <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="color:var(--text3)">Güncel değer</span><span style="font-family:var(--mono);color:var(--teal)">${tot2>1?fmt(tot2):'…'}</span></div>
     <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text3)">K/Z</span><span style="font-family:var(--mono);color:${totalPnl>=0?'var(--teal)':'var(--red)'}">${totalPnl>-1?(totalPnl>=0?'+':'')+ fmt(totalPnl):'…'}</span></div>`;
 }
-function renderBncPortfolio(){
-  const items=bncPortfolio;
-  const totalUsdt=items.filter(c=>c.price).reduce((s,c)=>s+c.price*c.qty,0);
-  document.getElementById('bnc-total-usdt').textContent='$'+totalUsdt.toFixed(2);
-  document.getElementById('bnc-total-try').textContent=fmt(totalUsdt*usdTry);
-  document.getElementById('bnc-list').innerHTML=items.map(c=>{
-    const usdPrice=c.price||0;
-    const val=usdPrice*c.qty;
-    const pnl=val-(c.buy*c.qty);
-    const pct=c.buy>0?((pnl/(c.buy*c.qty))*100).toFixed(1):0;
-    return `<div class="crypto-row">
-      <div class="crypto-icon">${c.icon}</div>
-      <div class="crypto-body"><div class="crypto-name">${c.sym}</div><div class="crypto-sym">${c.qty} adet</div></div>
-      <div>
-        <div class="crypto-price">${usdPrice>0?fmtU(usdPrice):'…'}</div>
-        <div class="crypto-change ${pnl>=0?'up':'dn'}">${pnl>=0?'+':''}%${Math.abs(pct)}</div>
-        <div class="crypto-holdings">${val>0?fmtU(val):''}</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// Coin search for Binance add
+// Coin search
 const COIN_LIST = [
   // — Top Layer 1 —
   {id:'bitcoin',sym:'BTC',name:'Bitcoin',icon:'₿'},
@@ -679,62 +651,7 @@ const COIN_LIST = [
   {id:'sonic-3',sym:'S',name:'Sonic (eski Fantom)',icon:'👻'},
 ];
 
-let bncSelectedCoin = null;
 let addCoinSelected = null;
-
-function searchBncCoin(){
-  const q=document.getElementById('bnc-search').value.trim().toUpperCase();
-  if(q.length<1){document.getElementById('bnc-search-res').innerHTML='';return;}
-  const res=COIN_LIST.filter(c=>c.sym.includes(q)||c.name.toUpperCase().includes(q));
-  document.getElementById('bnc-search-res').innerHTML=res.slice(0,8).map(c=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:var(--rs);cursor:pointer;transition:background .12s;margin-bottom:3px" onmouseover="this.style.background='var(--bg4)'" onmouseout="this.style.background='transparent'" onclick="selectBncCoin('${c.id}','${c.sym}','${c.name}','${c.icon}')">
-      <span style="font-size:15px">${c.icon}</span>
-      <div><div style="font-size:13px;font-weight:500">${c.sym}</div><div style="font-size:10.5px;color:var(--text3)">${c.name}</div></div>
-    </div>`).join('');
-}
-
-async function selectBncCoin(id,sym,name,icon){
-  bncSelectedCoin={id,sym,name,icon};
-  document.getElementById('bnc-coin').value=sym;
-  document.getElementById('bnc-search-res').innerHTML='';
-  document.getElementById('bnc-search').value='';
-  document.getElementById('bnc-calc-preview').innerHTML=`<span class="spin">↻</span> ${sym} fiyatı alınıyor...`;
-  const prices=await fetchCryptoPrices([id]);
-  const p=prices[id];
-  if(p){
-    bncSelectedCoin.usdPrice=p.usd;
-    const decimals1=p.usd<0.001?8:p.usd<0.1?6:p.usd<1?4:2;
-    document.getElementById('bnc-buy').value=p.usd.toFixed(decimals1);
-    calcBncValue();
-  }
-}
-
-function calcBncValue(){
-  const qty=parseFloat(document.getElementById('bnc-qty').value)||0;
-  const buy=parseFloat(document.getElementById('bnc-buy').value)||0;
-  if(!bncSelectedCoin||!qty){document.getElementById('bnc-calc-preview').innerHTML='— miktar girin';return;}
-  const currentUsd=bncSelectedCoin.usdPrice||buy;
-  const valUsdt=currentUsd*qty;
-  const costUsdt=buy*qty;
-  const pnlUsdt=valUsdt-costUsdt;
-  document.getElementById('bnc-calc-preview').innerHTML=
-    `<span style="color:var(--text2)">${qty} ${bncSelectedCoin.sym}</span> × <span style="font-family:var(--mono)">$${currentUsd.toFixed(4)}</span> = <strong style="color:var(--teal)">$${valUsdt.toFixed(2)}</strong> (${fmt(valUsdt*usdTry)})<br>K/Z: <span style="color:${pnlUsdt>=0?'var(--teal)':'var(--red)'}">${pnlUsdt>=0?'+':''}$${pnlUsdt.toFixed(2)}</span>`;
-}
-
-function addBncCoin(){
-  if(!bncSelectedCoin) return;
-  const qty=parseFloat(document.getElementById('bnc-qty').value)||0;
-  const buy=parseFloat(document.getElementById('bnc-buy').value)||0;
-  if(!qty) return;
-  bncPortfolio.push({id:Date.now(),cgId:bncSelectedCoin.id,sym:bncSelectedCoin.sym,qty,buy,price:bncSelectedCoin.usdPrice||null,icon:bncSelectedCoin.icon});
-  renderBncPortfolio();
-  showNotif(bncSelectedCoin.sym+' Binance portföyüne eklendi','🟡');
-  bncSelectedCoin=null;
-  document.getElementById('bnc-coin').value='';
-  document.getElementById('bnc-qty').value='';
-  document.getElementById('bnc-calc-preview').innerHTML='— coin seçin';
-}
-
 // Add coin (other exchanges)
 function searchAddCoin(){
   const q=document.getElementById('add-coin-q').value.trim().toUpperCase();
@@ -1018,7 +935,6 @@ function refreshSettingsCounts() {
   document.getElementById('count-banks').textContent         = bankAccs.length + ' hesap';
   document.getElementById('count-investments').textContent   = investments.length + ' hesap';
   document.getElementById('count-crypto').textContent        = cryptoPortfolio.length + ' coin';
-  document.getElementById('count-bnc').textContent           = bncPortfolio.length + ' coin';
   document.getElementById('count-bills').textContent         = bills.length + ' fatura';
   document.getElementById('count-budgets').textContent       = budgets.length + ' kalem';
   document.getElementById('count-installments').textContent  = installments.length + ' taksit';
@@ -1268,7 +1184,6 @@ function saveData() {
     localStorage.setItem('finansai_bankaccs', JSON.stringify(bankAccs));
     localStorage.setItem('finansai_investments', JSON.stringify(investments));
     localStorage.setItem('finansai_crypto', JSON.stringify(cryptoPortfolio));
-    localStorage.setItem('finansai_bnc', JSON.stringify(bncPortfolio));
     localStorage.setItem('finansai_monthly', JSON.stringify(monthlyData));
     localStorage.setItem('finansai_watch', JSON.stringify(watchItems));
     localStorage.setItem('finansai_transactions', JSON.stringify(allTx));
@@ -1283,7 +1198,6 @@ function loadData() {
     const ba = localStorage.getItem('finansai_bankaccs'); if(ba) bankAccs.splice(0, bankAccs.length, ...JSON.parse(ba));
     const inv = localStorage.getItem('finansai_investments'); if(inv) investments.splice(0, investments.length, ...JSON.parse(inv));
     const cr = localStorage.getItem('finansai_crypto'); if(cr) cryptoPortfolio.splice(0, cryptoPortfolio.length, ...JSON.parse(cr));
-    const bn = localStorage.getItem('finansai_bnc'); if(bn) bncPortfolio.splice(0, bncPortfolio.length, ...JSON.parse(bn));
     const md = localStorage.getItem('finansai_monthly'); if(md) Object.assign(monthlyData, JSON.parse(md));
     const wa = localStorage.getItem('finansai_watch'); if(wa) watchItems.splice(0, watchItems.length, ...JSON.parse(wa));
     const tx = localStorage.getItem('finansai_transactions'); if(tx) allTx.splice(0, allTx.length, ...JSON.parse(tx));
