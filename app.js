@@ -139,25 +139,49 @@ function switchFTab(t){
 let cryptoPrices = {};
 let lastFetch = 0;
 
+// cgId -> Binance sembol eslemesi
+const cgToBinance = {
+  bitcoin:'BTCUSDT', ripple:'XRPUSDT', ethereum:'ETHUSDT', solana:'SOLUSDT',
+  'terra-luna-classic':'LUNCUSDT', cardano:'ADAUSDT', dogecoin:'DOGEUSDT',
+  polkadot:'DOTUSDT', avalanche:'AVAXUSDT', chainlink:'LINKUSDT',
+  litecoin:'LTCUSDT', 'shiba-inu':'SHIBUSDT', matic:'MATICUSDT',
+  kaspa:'KASUSDT', tron:'TRXUSDT', toncoin:'TONUSDT'
+};
+
 async function fetchCryptoPrices(ids){
   if(Date.now()-lastFetch < 30000 && Object.keys(cryptoPrices).length > 0) return cryptoPrices;
   try {
-    const idList = ids.join(',');
-    const resp = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${idList}&vs_currencies=usd,try&include_24hr_change=true`);
-    if(!resp.ok) throw new Error('CoinGecko rate limit');
-    const data = await resp.json();
-    // also get USD/TRY
-    const fxResp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=try');
-    if(fxResp.ok){
-      const fxData = await fxResp.json();
-      if(fxData.tether?.try) usdTry = fxData.tether.try;
-    }
+    const fxResp = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=USDTTRY');
+    if(fxResp.ok){ const fx=await fxResp.json(); if(fx.price) usdTry=parseFloat(fx.price); }
+
+    const symbols = ids.map(id=>cgToBinance[id]).filter(Boolean);
+    const promises = symbols.map(sym=>
+      fetch('https://api.binance.com/api/v3/ticker/24hr?symbol='+sym)
+        .then(r=>r.ok?r.json():null).catch(()=>null)
+    );
+    const results = await Promise.all(promises);
+
+    const data = {};
+    ids.forEach(id=>{
+      const sym = cgToBinance[id];
+      if(!sym) return;
+      const idx = symbols.indexOf(sym);
+      const r = results[idx];
+      if(r && r.lastPrice){
+        const usd = parseFloat(r.lastPrice);
+        data[id] = {
+          usd,
+          try: usd * usdTry,
+          usd_24h_change: parseFloat(r.priceChangePercent)||0
+        };
+      }
+    });
+
     cryptoPrices = data;
     lastFetch = Date.now();
-    document.getElementById('crypto-updated').textContent = 'Güncellendi: '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('crypto-updated').textContent = 'Guncellendi: '+new Date().toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'});
     return data;
   } catch(e) {
-    // fallback prices (USD)
     return {bitcoin:{usd:87000,try:87000*usdTry,usd_24h_change:1.2},ripple:{usd:1.52,try:1.52*usdTry,usd_24h_change:-1.3},ethereum:{usd:2050,try:2050*usdTry,usd_24h_change:0.8},solana:{usd:130,try:130*usdTry,usd_24h_change:2.1}};
   }
 }
@@ -353,7 +377,9 @@ function renderMonthlyAccSel(){
 function renderMonthlyTbl(){
   const sel=document.getElementById('monthly-sel'); if(!sel) return;
   const accId=parseInt(sel.value);
-  const ms=['Eki 25','Kas 25','Ara 25','Oca 26','Şub 26','Mar 26'];
+  const ayIsimleri=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const bugun=new Date();
+  const ms=Array.from({length:12},(_,i)=>{const d=new Date(bugun.getFullYear(),bugun.getMonth()+i);return ayIsimleri[d.getMonth()]+' '+(d.getFullYear()%100).toString().padStart(2,'0');});
   const stored=monthlyData[accId]||{};
   const hdrs=`<tr><th>Ay</th><th>Açılış Bakiyesi (₺)</th><th>Gelir (₺)</th><th>Gider (₺)</th><th>Kapanış (₺)</th></tr>`;
   const rows=ms.map(m=>{
@@ -372,7 +398,9 @@ function updMonthly(aId,m,f,v){if(!monthlyData[aId])monthlyData[aId]={};if(!mont
 function saveMonthly(){
   const sel=document.getElementById('monthly-sel'); if(!sel) return;
   const aId=parseInt(sel.value);
-  const ms=['Eki 25','Kas 25','Ara 25','Oca 26','Şub 26','Mar 26'];
+  const ayIsimleri=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const bugun=new Date();
+  const ms=Array.from({length:12},(_,i)=>{const d=new Date(bugun.getFullYear(),bugun.getMonth()+i);return ayIsimleri[d.getMonth()]+' '+(d.getFullYear()%100).toString().padStart(2,'0');});
   const stored=monthlyData[aId]||{};
   const vals=ms.map(m=>{const d=stored[m]||{};return(parseFloat(d.op)||0)+(parseFloat(d.inc)||0)-(parseFloat(d.exp)||0);});
   const max=Math.max(...vals.map(Math.abs),1);
