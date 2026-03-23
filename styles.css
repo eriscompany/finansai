@@ -206,6 +206,26 @@ input::placeholder { color: var(--text3); }
 /* Bank page polish */
 .bank-tree { margin-top: 12px; }
 .bank-import-card { margin-top: 12px; }
+.bank-top-card { padding: 14px; }
+.bank-list-toolbar { margin-top: 12px; margin-bottom: 8px; }
+.bank-search-wrap { width: 280px; max-width: 100%; }
+.bank-search-wrap input { height: 36px; }
+.bank-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.bank-summary-item {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+.bank-summary-label {
+  font-size: 10.5px;
+  color: var(--text3);
+  margin-bottom: 4px;
+}
 .bank-card { margin-bottom: 10px; background: linear-gradient(180deg, rgba(74,158,255,.06), transparent 30%), var(--bg2); }
 .bank-head { display: flex; align-items: center; gap: 10px; }
 .bank-head-icon {
@@ -270,6 +290,8 @@ input::placeholder { color: var(--text3); }
   .sidebar { height: auto; position: relative; }
   .g2, .g3, .g3r, .fg2, .fg3 { grid-template-columns: 1fr; }
   .main { padding: 14px; }
+  .bank-search-wrap { width: 100%; margin-top: 8px; }
+  .bank-summary-grid { grid-template-columns: 1fr; }
   .bank-actions .btn { width: 100%; }
   .bank-inline-actions { flex-wrap: wrap; }
   .bank-inline-actions .btn { width: 100%; }

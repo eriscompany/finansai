@@ -409,18 +409,41 @@ function renderBanksPage(){
   if(!bankWizard) bankWizard = createEmptyBankWizard();
   const host = document.getElementById('banks-root');
   if(!host) return;
+  const totalCards = banks.reduce((s,b)=>s+b.cards.length,0);
+  const totalLoans = banks.reduce((s,b)=>s+b.loans.length,0);
   host.innerHTML=`
     <div class="g2">
-      <div class="card">
+      <div class="card bank-top-card">
         <div class="ct">Banka Form Sihirbazı</div>
         ${renderBankWizard()}
       </div>
-      <div class="card">
+      <div class="card bank-top-card">
         <div class="ct">Özet</div>
-        <div class="fg3">
-          <div><div class="fl">Banka</div><div class="mv">${banks.length}</div></div>
-          <div><div class="fl">Hesap</div><div class="mv">${totalBankAccounts()}</div></div>
-          <div><div class="fl">Kredi Kartı</div><div class="mv">${banks.reduce((s,b)=>s+b.cards.length,0)}</div></div>
+        <div class="bank-summary-grid">
+          <div class="bank-summary-item">
+            <div class="bank-summary-label">🏦 Banka</div>
+            <div class="mv">${banks.length}</div>
+          </div>
+          <div class="bank-summary-item">
+            <div class="bank-summary-label">💼 Hesap</div>
+            <div class="mv">${totalBankAccounts()}</div>
+          </div>
+          <div class="bank-summary-item">
+            <div class="bank-summary-label">📄 Kredi</div>
+            <div class="mv">${totalLoans}</div>
+          </div>
+          <div class="bank-summary-item">
+            <div class="bank-summary-label">💳 Kart</div>
+            <div class="mv">${totalCards}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card bank-list-toolbar">
+      <div class="u-flex-between">
+        <div class="ct">Banka Listesi</div>
+        <div class="bank-search-wrap">
+          <input id="bank-search" placeholder="Banka ara..." data-input-action="renderBankTree">
         </div>
       </div>
     </div>
@@ -923,7 +946,11 @@ function downloadBankTemplateExcel(){
 function renderBankTree(){
   const tree = document.getElementById('bank-tree');
   if(!tree) return;
-  tree.innerHTML = banks.map(b=>{
+  const q = (document.getElementById('bank-search')?.value || '').trim().toLowerCase();
+  const filtered = q
+    ? banks.filter(b=>b.name.toLowerCase().includes(q))
+    : banks;
+  tree.innerHTML = filtered.map(b=>{
     const accountTotal = b.accounts.reduce((s,a)=>s+a.balance,0);
     const loanTotal = b.loans.reduce((s,l)=>s+l.remaining,0);
     const cardTotal = b.cards.reduce((s,c)=>s+c.currentDebt,0);
@@ -948,7 +975,7 @@ function renderBankTree(){
       </div>
       ${b.expanded?renderBankDetail(b):''}
     </div>`;
-  }).join('') || '<p class="u-muted-12">Henüz banka yok.</p>';
+  }).join('') || `<p class="u-muted-12">${q?'Aramaya uygun banka bulunamadı.':'Henüz banka yok.'}</p>`;
 }
 
 function renderBankDetail(b){
