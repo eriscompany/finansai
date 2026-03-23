@@ -424,20 +424,6 @@ function renderBanksPage(){
         </div>
       </div>
     </div>
-    <div class="card bank-import-card">
-      <div class="ct">CSV / Excel İçe Aktar</div>
-      <div class="u-muted-12 u-mb-8">Excel şablonunu indir, satırları doldur, CSV veya Excel XML olarak içe aktar.</div>
-      <div class="fg2">
-        <div class="fg"><label class="fl">Dosya</label><input id="bank-import-file" type="file" accept=".csv,.txt,.xml,.xls,text/csv,text/plain,application/xml"></div>
-        <div class="fg"><label class="fl">Şablon</label><div class="u-flex u-gap-8"><button class="btn bghost u-full" data-action="downloadBankTemplate">CSV Tablo</button><button class="btn bghost u-full" data-action="downloadBankFormTemplate">Form CSV</button><button class="btn bghost u-full" data-action="downloadBankTemplateExcel">Excel Şablon</button></div></div>
-      </div>
-      <div class="u-muted-11">Tablo CSV: satır bazlı. Form CSV: alan-değer bazlı (tek bankayı kolay doldurma).</div>
-      <div class="u-flex u-gap-8">
-        <button class="btn bacc2" data-action="importBanksCsv">CSV Yükle ve İşle</button>
-        <button class="btn bghost" data-action="replaceBanksByCsv">CSV ile Değiştir (mevcutları sil)</button>
-      </div>
-      <div id="bank-import-res" class="u-muted-11 u-mt-10"></div>
-    </div>
     <div id="bank-tree" class="bank-tree"></div>
   `;
   renderBankTree();
@@ -447,10 +433,7 @@ function renderBankWizard(){
   if(!bankWizard.open){
     return `
       <div class="u-muted-12 u-mb-8">Gerçek form akışı: Banka bilgisi → Hesaplar → Krediler → Kartlar → Onay.</div>
-      <div class="u-flex u-gap-8">
-        <button class="btn bacc2" data-action="openBankWizard">Formu Başlat</button>
-        <button class="btn bghost" data-action="addBankRoot">Hızlı Ekle</button>
-      </div>
+      <button class="btn bacc2" data-action="openBankWizard">Formu Başlat</button>
     `;
   }
   const d = bankWizard.draft;
@@ -953,7 +936,10 @@ function renderBankTree(){
             <div class="u-muted-11">Hesap ${b.accounts.length} · Kredi ${b.loans.length} · Kart ${b.cards.length}</div>
           </div>
         </div>
-        <button class="btn bghost bsm" data-action="toggleBankExpand" data-args="${b.id}">${b.expanded?'Detayı Gizle':'Detayları Gör'}</button>
+        <div class="u-flex u-gap-8">
+          <button class="btn bghost bsm" data-action="toggleBankExpand" data-args="${b.id}">${b.expanded?'Detayı Gizle':'Detayları Gör'}</button>
+          <button class="btn bdanger2 bsm" data-action="deleteBank" data-args="${b.id}">Bankayı Sil</button>
+        </div>
       </div>
       <div class="fg3 bank-metrics">
         <div class="bank-metric"><div class="fl">Toplam Hesap</div><div class="bank-metric-value ${accountTotal>=0?'pos':'neg'}">${fmt(accountTotal)}</div></div>
@@ -1278,6 +1264,25 @@ function deleteBankItem(bankId, type, itemId){
   if(type==='card') bank.cards=bank.cards.filter(x=>x.id!==id);
   renderBankTree();
   showNotif('Kayıt silindi','🗑');
+}
+
+async function deleteBank(bankId){
+  const id = Number(bankId);
+  const bank = banks.find(b=>b.id===id);
+  if(!bank) return;
+  const ok = await showConfirm({
+    title: `"${bank.name}" silinecek`,
+    msg: 'Bu bankaya bağlı hesap, kredi ve kart kayıtları kaldırılacak.',
+    icon: '🏦',
+    variant: 'danger',
+    okLabel: 'Bankayı Sil'
+  });
+  if(!ok) return;
+  const idx = banks.findIndex(b=>b.id===id);
+  if(idx===-1) return;
+  banks.splice(idx,1);
+  renderBankTree();
+  showNotif('Banka listeden kaldırıldı','🗑');
 }
 
 function addBankAccount(bankId){
