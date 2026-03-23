@@ -1352,26 +1352,33 @@ let _sessionCountdown = null;
 function authInit() {
   // overlay zaten HTML'de display:block — hiçbir şey yapmasak da görünür
   // shell zaten CSS'de display:none — authSuccess'e kadar gizli
-  if (FinansAuth.needsSetup()) {
-    // İlk kurulum: setup wizard göster
-    document.getElementById('auth-setup').style.display = 'flex';
-    document.getElementById('auth-login').style.display  = 'none';
-    setupStrengthMeter();
-  } else {
-    const session = FinansAuth.getSession();
-    if (session) {
-      // Geçerli session: direkt uygulama
-      authSuccess(session);
-    } else {
-      // Session yok: login göster
-      document.getElementById('auth-setup').style.display = 'none';
-      document.getElementById('auth-login').style.display  = 'flex';
-      setTimeout(() => {
-        const loginUser = document.getElementById('login-user');
-        if(loginUser) loginUser.focus();
-      }, 150);
-    }
+  const session = FinansAuth.getSession();
+  if (session) {
+    authSuccess(session);
+    return;
   }
+  showLoginScreen();
+  if (FinansAuth.needsSetup()) {
+    const info = document.getElementById('lock-info');
+    if (info) info.textContent = 'İlk kullanım için alttan Kayıt Ol seçin';
+  }
+}
+
+function showSetupScreen() {
+  document.getElementById('auth-setup').style.display = 'flex';
+  document.getElementById('auth-login').style.display = 'none';
+  setupStrengthMeter();
+}
+
+function showLoginScreen() {
+  document.getElementById('auth-setup').style.display = 'none';
+  document.getElementById('auth-login').style.display = 'flex';
+  const info = document.getElementById('lock-info');
+  if (info && !FinansAuth.needsSetup()) info.textContent = '';
+  setTimeout(() => {
+    const loginUser = document.getElementById('login-user');
+    if (loginUser) loginUser.focus();
+  }, 150);
 }
 
 async function doSetup() {
@@ -1457,11 +1464,9 @@ function doLogout() {
   const logoutShell = document.querySelector('.shell');
   if(logoutShell){ logoutShell.style.display='none'; }
   document.getElementById('auth-overlay').style.display = 'block';
-  document.getElementById('auth-setup').style.display = 'none';
-  document.getElementById('auth-login').style.display = 'flex';
+  showLoginScreen();
   document.getElementById('login-pass').value = '';
   document.getElementById('login-err').textContent = '';
-  setTimeout(()=>document.getElementById('login-user').focus(), 100);
 }
 
 function startSessionTimer() {

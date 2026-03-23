@@ -123,6 +123,7 @@
         >
         Hesabı Oluştur →
       </button>
+      <button data-action="showLoginScreen" class="auth-secondary-btn">Girişe Dön</button>
     </div>
   </div>
 </div>
@@ -147,10 +148,14 @@
     #auth-login-card input::placeholder{color:rgba(255,255,255,.25)!important}
     [data-theme=light] #auth-login-card input{background:rgba(0,0,0,.04)!important;border-color:rgba(0,0,0,.12)!important;color:#18180f!important}
     [data-theme=light] #auth-login-card input::placeholder{color:rgba(0,0,0,.3)!important}
+    #auth-login-card{max-width:460px!important}
+    #auth-login-card .auth-card-inner{padding:34px 30px 32px!important}
+    .auth-secondary-btn{width:100%;padding:11px;border:1px solid rgba(74,158,255,.35);background:rgba(74,158,255,.08);color:#bfe2ff;border-radius:11px;font-size:13px;font-weight:600;cursor:pointer;margin-top:10px;transition:all .2s}
+    .auth-secondary-btn:hover{background:rgba(74,158,255,.16);border-color:rgba(74,158,255,.55)}
   </style>
   <!-- Card -->
   <div id="auth-login-card" style="position:relative;z-index:10;width:100%;max-width:520px;margin:0 auto;padding:24px;animation:loginFadeIn .5s ease both">
-    <div style="background:rgba(15,18,28,.85);backdrop-filter:blur(20px);border:1px solid rgba(74,158,255,.2);border-radius:24px;padding:44px 44px 42px;box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);animation:borderGlowGreen 4s ease-in-out infinite">
+    <div class="auth-card-inner" style="background:rgba(15,18,28,.85);backdrop-filter:blur(20px);border:1px solid rgba(74,158,255,.2);border-radius:24px;padding:44px 44px 42px;box-shadow:0 32px 80px rgba(0,0,0,.6),0 0 0 1px rgba(255,255,255,.04);animation:borderGlowGreen 4s ease-in-out infinite">
       
       <!-- Logo -->
       <div style="text-align:center;margin-bottom:36px">
@@ -286,6 +291,7 @@
         >
         Giriş Yap →
       </button>
+      <button id="go-setup-btn" data-action="showSetupScreen" class="auth-secondary-btn">Kayıt Ol</button>
 
       <!-- Security badge -->
       <div style="margin-top:24px;padding-top:18px;border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap">
