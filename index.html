@@ -483,57 +483,7 @@
 <!-- BANKS -->
 <div class="page" id="page-banks">
   <div class="topbar"><div><h1>Bankalar</h1></div></div>
-  <div class="tabs">
-    <div class="tab active" data-btab="accounts" data-action="switchBTab" data-args="'accounts'">Hesaplar</div>
-    <div class="tab" data-btab="monthly" data-action="switchBTab" data-args="'monthly'">Aylık Özet</div>
-    <div class="tab" data-btab="credit" data-action="switchBTab" data-args="'credit'">Kredi & Eksi Bakiye</div>
-  </div>
-  <div id="bt-accounts">
-    <div class="g2">
-      <div id="bank-accs"></div>
-      <div class="card">
-        <div class="ct">Hesap Ekle</div>
-        <div class="fg"><label class="fl">Banka</label><select id="nb-bank"><option>Garanti BBVA</option><option>İş Bankası</option><option>Akbank</option><option>Yapı Kredi</option><option>Ziraat</option><option>Halkbank</option><option>VakıfBank</option></select></div>
-        <div class="fg"><label class="fl">Hesap Türü</label><select id="nb-type"><option>Vadesiz</option><option>Vadeli</option><option>Tasarruf</option><option>Kredi Kartı</option><option>Kredi</option></select></div>
-        <div class="fg2">
-          <div class="fg"><label class="fl">Son 4 Hane</label><input id="nb-no" placeholder="1234" maxlength="4"></div>
-          <div class="fg"><label class="fl">Bakiye (₺)</label><input id="nb-bal" type="number" placeholder="0"></div>
-        </div>
-        <div class="fg2">
-          <div class="fg"><label class="fl">Faiz Oranı (%)</label><input id="nb-rate" type="number" step="0.01" placeholder="0.00"></div>
-          <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="nb-late" type="number" step="0.01" placeholder="0.00"></div>
-        </div>
-        <button class="btn bacc2" data-action="addBankAcc">Hesap Ekle</button>
-      </div>
-    </div>
-  </div>
-  <div id="bt-monthly" style="display:none">
-    <div class="card">
-      <div class="ct">Aylık Hesap Özeti</div>
-      <div class="fg"><label class="fl">Hesap</label><select id="monthly-sel" data-change-action="renderMonthlyTbl"></select></div>
-      <div style="overflow-x:auto"><table class="fc-tbl" id="monthly-tbl"></table></div>
-      <button class="btn bacc2" style="width:auto;padding:8px 18px;margin-top:10px" data-action="saveMonthly">Kaydet</button>
-    </div>
-    <div class="card u-mt-10"><div class="ct">Kapanış Bakiyesi Grafiği</div><div id="monthly-chart" class="chart-wrap-sm"></div></div>
-  </div>
-  <div id="bt-credit" style="display:none">
-    <div class="g2">
-      <div class="card"><div class="ct">Eksi Bakiye / Kredi Hesapları</div><div id="credit-list"></div></div>
-      <div class="card">
-        <div class="ct">Faiz Oranı Güncelle</div>
-        <div class="fg"><label class="fl">Hesap</label><select id="cr-sel"></select></div>
-        <div class="fg2">
-          <div class="fg"><label class="fl">Yıllık Faiz (%)</label><input id="cr-rate" type="number" step="0.01" placeholder="45.00"></div>
-          <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="cr-late" type="number" step="0.01" placeholder="62.00"></div>
-        </div>
-        <div class="fg"><label class="fl">Mevcut Bakiye (₺)</label><input id="cr-bal" type="number" placeholder="-2840"></div>
-        <div class="fg"><label class="fl">Son Ödeme</label><input id="cr-due" type="date"></div>
-        <button class="btn bacc2" data-action="saveCreditInfo">Güncelle</button>
-        <div class="div"></div>
-        <div id="cr-calc" style="font-size:12px;color:var(--text2);line-height:1.7"></div>
-      </div>
-    </div>
-  </div>
+  <div id="banks-root"></div>
 </div>
 
 <!-- INVESTMENTS -->

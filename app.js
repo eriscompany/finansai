@@ -39,10 +39,64 @@ const allTx = [
   {id:10,name:"Kira",cat:"Fatura",amount:-4500,date:"2026-03-01",type:"gider",icon:"🏠",bank:"İş Bankası",auto:true},
 ];
 
-let bankAccs = [
-  {id:1,bank:"Garanti BBVA",icon:"🟠",type:"Vadesiz",no:"4521",balance:28750,rate:0,lateRate:0},
-  {id:2,bank:"İş Bankası",icon:"🔵",type:"Tasarruf",no:"7832",balance:12500,rate:18,lateRate:0},
-  {id:3,bank:"Akbank",icon:"🔴",type:"Kredi Kartı",no:"1204",balance:-2840,rate:45.5,lateRate:62},
+let banks = [
+  {
+    id: 1,
+    name: "Garanti BBVA",
+    icon: "🟠",
+    expanded: true,
+    accounts: [
+      { id: 11, type: "Vadesiz", no: "4521", balance: 28750, iban: "", currency: "TRY" }
+    ],
+    loans: [],
+    cards: []
+  },
+  {
+    id: 2,
+    name: "İş Bankası",
+    icon: "🔵",
+    expanded: false,
+    accounts: [
+      { id: 21, type: "Tasarruf", no: "7832", balance: 12500, iban: "", currency: "TRY" }
+    ],
+    loans: [
+      {
+        id: 22,
+        name: "Tatil Kredisi",
+        principal: 30000,
+        remaining: 18250,
+        annualRate: 35,
+        termMonths: 12,
+        paymentDay: 12,
+        startDate: "2025-12-01",
+        monthlyInstallment: 2750,
+        lateRate: 52
+      }
+    ],
+    cards: []
+  },
+  {
+    id: 3,
+    name: "Akbank",
+    icon: "🔴",
+    expanded: false,
+    accounts: [],
+    loans: [],
+    cards: [
+      {
+        id: 31,
+        name: "Axess",
+        last4: "1204",
+        currentDebt: 2840,
+        monthlySpend: 6200,
+        minPayment: 710,
+        dueDay: 10,
+        dueDate: "",
+        annualRate: 45.5,
+        lateRate: 62
+      }
+    ]
+  }
 ];
 
 let investments = [
@@ -305,108 +359,289 @@ function renderTxItem(t){
 }
 
 // ═══ BANKS ═══
-function initBanks(){ renderBankAccs(); populateSelects(); renderCreditList(); renderMonthlyAccSel(); renderMonthlyTbl(); }
-function renderBankAccs(){
-  document.getElementById('bank-accs').innerHTML=bankAccs.map(a=>`
-    <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r);padding:13px 15px;margin-bottom:9px;">
-      <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
-        <div style="width:32px;height:32px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center;font-size:14px">${a.icon||'🏦'}</div>
-        <div style="flex:1"><div style="font-size:13.5px;font-weight:500">${a.bank}</div><div style="font-size:11px;color:var(--text3)">${a.type} · **** ${a.no}</div></div>
-        <div style="font-family:var(--mono);font-size:17px;font-weight:500;color:${a.balance<0?'var(--red)':'var(--teal)'}">${a.balance<0?'-':''}${fmt(a.balance)}</div>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${a.rate>0?`<span style="font-size:10.5px;padding:2px 7px;border-radius:4px;background:var(--bg4);color:var(--text3);border:1px solid var(--border)">Faiz: %${a.rate}</span>`:''}
-        ${a.lateRate>0?`<span style="font-size:10.5px;padding:2px 7px;border-radius:4px;background:var(--red-dim);color:var(--red);border:1px solid rgba(255,96,96,.2)">Gecikme: %${a.lateRate}</span>`:''}
-        ${a.balance<0?`<span style="font-size:10.5px;padding:2px 7px;border-radius:4px;background:var(--red-dim);color:var(--red);border:1px solid rgba(255,96,96,.2)">Eksi bakiye</span>`:''}
-      </div>
-    </div>`).join('');
+const BANK_ICONS={'Garanti BBVA':'🟠','İş Bankası':'🔵','Akbank':'🔴','Yapı Kredi':'⚫','Ziraat':'🟢','Halkbank':'🟤','VakıfBank':'🟡'};
+
+function initBanks(){ renderBanksPage(); }
+
+function totalBankAccounts(){ return banks.reduce((s,b)=>s+b.accounts.length,0); }
+
+function migrateLegacyBanks(raw){
+  const legacy = Array.isArray(raw) ? raw : [];
+  if(!legacy.length) return;
+  const map = new Map();
+  legacy.forEach(a=>{
+    const key=a.bank||'Banka';
+    if(!map.has(key)){
+      map.set(key,{id:Date.now()+Math.floor(Math.random()*10000),name:key,icon:a.icon||BANK_ICONS[key]||'🏦',expanded:false,accounts:[],loans:[],cards:[]});
+    }
+    const b=map.get(key);
+    if(a.type==='Kredi'){
+      b.loans.push({id:Date.now()+Math.floor(Math.random()*10000),name:'Kredi',principal:Math.abs(a.balance||0),remaining:Math.abs(a.balance||0),annualRate:a.rate||0,termMonths:12,paymentDay:10,startDate:'',monthlyInstallment:0,lateRate:a.lateRate||0});
+    }else if(a.type==='Kredi Kartı'){
+      b.cards.push({id:Date.now()+Math.floor(Math.random()*10000),name:'Kredi Kartı',last4:a.no||'0000',currentDebt:Math.abs(a.balance||0),monthlySpend:0,minPayment:0,dueDay:10,dueDate:'',annualRate:a.rate||0,lateRate:a.lateRate||0});
+    }else{
+      b.accounts.push({id:a.id||Date.now(),type:a.type||'Vadesiz',no:a.no||'0000',balance:a.balance||0,iban:'',currency:'TRY'});
+    }
+  });
+  if(map.size) banks=[...map.values()];
 }
-function populateSelects(){
-  const opts=bankAccs.map(a=>`<option value="${a.id}">${a.bank} · ${a.type} *${a.no}</option>`).join('');
-  ['monthly-sel','cr-sel'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML=opts;});
-}
-function addBankAcc(){
-  const bank=document.getElementById('nb-bank').value;
-  const type=document.getElementById('nb-type').value;
-  const no=document.getElementById('nb-no').value||'0000';
-  const bal=parseFloat(document.getElementById('nb-bal').value)||0;
-  const rate=parseFloat(document.getElementById('nb-rate').value)||0;
-  const late=parseFloat(document.getElementById('nb-late').value)||0;
-  const icons={'Garanti BBVA':'🟠','İş Bankası':'🔵','Akbank':'🔴','Yapı Kredi':'⚫','Ziraat':'🟢','Halkbank':'🟤','VakıfBank':'🟡'};
-  bankAccs.push({id:Date.now(),bank,icon:icons[bank]||'🏦',type,no,balance:bal,rate,lateRate:late});
-  renderBankAccs();populateSelects();renderMonthlyAccSel();
-  showNotif(bank+' hesabı eklendi','🏦');
-}
-function renderCreditList(){
-  const neg=bankAccs.filter(a=>a.balance<0||a.lateRate>0||a.type==='Kredi Kartı'||a.type==='Kredi');
-  document.getElementById('credit-list').innerHTML=neg.length?neg.map(a=>{
-    const m=a.rate>0?Math.abs(a.balance)*(a.rate/100/12):0;
-    return `<div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">
-        <div><div style="font-size:13px;font-weight:500">${a.bank} · ${a.type}</div><div style="font-size:10.5px;color:var(--text3)">**** ${a.no}</div></div>
-        <div style="font-family:var(--mono);font-size:16px;color:${a.balance<0?'var(--red)':'var(--teal)'}">${a.balance<0?'-':''}${fmt(a.balance)}</div>
+
+function renderBanksPage(){
+  const host = document.getElementById('banks-root');
+  if(!host) return;
+  host.innerHTML=`
+    <div class="g2">
+      <div class="card">
+        <div class="ct">Banka Ekle</div>
+        <div class="fg"><label class="fl">Banka Adı</label><input id="bank-new-name" placeholder="Örn: QNB Finansbank"></div>
+        <div class="fg2">
+          <div class="fg"><label class="fl">İkon</label><input id="bank-new-icon" placeholder="🏦"></div>
+          <div class="fg"><label class="fl">Referans Kod</label><input id="bank-new-code" placeholder="Opsiyonel"></div>
+        </div>
+        <button class="btn bacc2" data-action="addBankRoot">Banka Oluştur</button>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${a.rate>0?`<span style="font-size:10.5px;padding:2px 7px;border-radius:4px;background:var(--red-dim);color:var(--orange)">Yıllık: %${a.rate}</span>`:''}
-        ${a.lateRate>0?`<span style="font-size:10.5px;padding:2px 7px;border-radius:4px;background:var(--red-dim);color:var(--red)">Gecikme: %${a.lateRate}</span>`:''}
-        ${m>0?`<span style="font-size:10.5px;padding:2px 7px;border-radius:4px;background:var(--bg4);color:var(--text3)">≈ Aylık faiz: ${fmt(m)}</span>`:''}
+      <div class="card">
+        <div class="ct">Özet</div>
+        <div class="fg3">
+          <div><div class="fl">Banka</div><div class="mv">${banks.length}</div></div>
+          <div><div class="fl">Hesap</div><div class="mv">${totalBankAccounts()}</div></div>
+          <div><div class="fl">Kredi Kartı</div><div class="mv">${banks.reduce((s,b)=>s+b.cards.length,0)}</div></div>
+        </div>
       </div>
+    </div>
+    <div id="bank-tree" style="margin-top:12px"></div>
+  `;
+  renderBankTree();
+}
+
+function renderBankTree(){
+  const tree = document.getElementById('bank-tree');
+  if(!tree) return;
+  tree.innerHTML = banks.map(b=>{
+    const accountTotal = b.accounts.reduce((s,a)=>s+a.balance,0);
+    const loanTotal = b.loans.reduce((s,l)=>s+l.remaining,0);
+    const cardTotal = b.cards.reduce((s,c)=>s+c.currentDebt,0);
+    return `<div class="card" style="margin-bottom:10px">
+      <div class="u-flex-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-size:20px">${b.icon||'🏦'}</div>
+          <div>
+            <div style="font-size:15px;font-weight:600">${b.name}</div>
+            <div class="u-muted-11">Hesap ${b.accounts.length} · Kredi ${b.loans.length} · Kart ${b.cards.length}</div>
+          </div>
+        </div>
+        <button class="btn bghost bsm" data-action="toggleBankExpand" data-args="${b.id}">${b.expanded?'Detayı Gizle':'Detayları Gör'}</button>
+      </div>
+      <div class="fg3" style="margin-top:10px">
+        <div><div class="fl">Toplam Hesap</div><div style="font-family:var(--mono);color:${accountTotal>=0?'var(--teal)':'var(--red)'}">${fmt(accountTotal)}</div></div>
+        <div><div class="fl">Kredi Borcu</div><div style="font-family:var(--mono);color:var(--orange)">${fmt(loanTotal)}</div></div>
+        <div><div class="fl">Kart Borcu</div><div style="font-family:var(--mono);color:var(--red)">${fmt(cardTotal)}</div></div>
+      </div>
+      ${b.expanded?renderBankDetail(b):''}
     </div>`;
-  }).join(''):'<p style="font-size:13px;color:var(--text3);padding:8px 0">Eksi bakiye hesabı yok.</p>';
+  }).join('') || '<p class="u-muted-12">Henüz banka yok.</p>';
 }
-function saveCreditInfo(){
-  const sel=document.getElementById('cr-sel'); if(!sel) return;
-  const a=bankAccs.find(x=>x.id===parseInt(sel.value)); if(!a) return;
-  a.rate=parseFloat(document.getElementById('cr-rate').value)||a.rate;
-  a.lateRate=parseFloat(document.getElementById('cr-late').value)||a.lateRate;
-  a.balance=parseFloat(document.getElementById('cr-bal').value)||a.balance;
-  const m=Math.abs(a.balance)*(a.rate/100/12);
-  const d=Math.abs(a.balance)*(a.lateRate/100/365);
-  document.getElementById('cr-calc').innerHTML=`<strong style="color:var(--text)">${a.bank}</strong> — Bakiye: <span style="color:var(--red)">${fmt(a.balance)}</span><br>Aylık faiz tahmini: <span style="color:var(--orange)">${fmt(m)}</span><br>Günlük gecikme: <span style="color:var(--red)">${fmt(d)}</span>`;
-  renderBankAccs();renderCreditList();
-  showNotif('Faiz bilgileri güncellendi','%');
+
+function renderBankDetail(b){
+  return `<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'account'">+ Hesap</button>
+      <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'loan'">+ Kredi</button>
+      <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'card'">+ Kredi Kartı</button>
+    </div>
+    ${renderBankForm(b)}
+    <div class="g3r" style="margin-top:10px">
+      <div class="card">
+        <div class="ct">Hesaplar</div>
+        ${b.accounts.map(a=>`<div class="tx-item"><div class="tx-b"><div class="tx-name">${a.type} · **** ${a.no}</div><div class="tx-meta">${a.currency||'TRY'}</div></div><div class="tx-amt ${a.balance>=0?'pos':'neg'}">${a.balance>=0?'+':''}${fmt(a.balance)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
+      </div>
+      <div class="card">
+        <div class="ct">Krediler</div>
+        ${b.loans.map(l=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600">${l.name}</div><div class="u-muted-11">Vade: ${l.termMonths} ay · Ödeme günü: ${l.paymentDay}</div><div class="u-muted-11">Faiz: %${l.annualRate} · Gecikme: %${l.lateRate||0}</div><div style="font-family:var(--mono)">Kalan: ${fmt(l.remaining)} · Aylık: ${fmt(l.monthlyInstallment||0)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
+      </div>
+      <div class="card">
+        <div class="ct">Kredi Kartları</div>
+        ${b.cards.map(c=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600">${c.name} · **** ${c.last4}</div><div class="u-muted-11">Son ödeme günü: ${c.dueDay}${c.dueDate?` (${c.dueDate})`:''}</div><div class="u-muted-11">Aylık harcama: ${fmt(c.monthlySpend||0)} · Asgari: ${fmt(c.minPayment||0)}</div><div style="font-family:var(--mono);color:var(--red)">Güncel borç: ${fmt(c.currentDebt||0)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
+      </div>
+    </div>
+  </div>`;
 }
-// Monthly summary
-function renderMonthlyAccSel(){
-  const sel=document.getElementById('monthly-sel'); if(!sel) return;
-  sel.innerHTML=bankAccs.map(a=>`<option value="${a.id}">${a.bank} · ${a.type} *${a.no}</option>`).join('');
+
+function renderBankForm(bank){
+  const mode = bank.formMode || '';
+  if(!mode) return '';
+  if(mode==='account'){
+    return `<div class="card">
+      <div class="ct">Yeni Hesap</div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Tür</label><select id="acc-type-${bank.id}"><option>Vadesiz</option><option>Vadeli</option><option>Tasarruf</option></select></div>
+        <div class="fg"><label class="fl">Son 4 Hane</label><input id="acc-no-${bank.id}" maxlength="4" placeholder="1234"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Bakiye</label><input id="acc-bal-${bank.id}" type="number" placeholder="0"></div>
+        <div class="fg"><label class="fl">Para Birimi</label><select id="acc-cur-${bank.id}"><option>TRY</option><option>USD</option><option>EUR</option></select></div>
+      </div>
+      <button class="btn bacc2" data-action="addBankAccount" data-args="${bank.id}">Hesap Ekle</button>
+    </div>`;
+  }
+  if(mode==='loan'){
+    return `<div class="card">
+      <div class="ct">Yeni Kredi</div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Kredi Adı</label><input id="loan-name-${bank.id}" placeholder="Taşıt Kredisi"></div>
+        <div class="fg"><label class="fl">Anapara</label><input id="loan-principal-${bank.id}" type="number" placeholder="0"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Kalan Borç</label><input id="loan-rem-${bank.id}" type="number" placeholder="0"></div>
+        <div class="fg"><label class="fl">Faiz (% yıllık)</label><input id="loan-rate-${bank.id}" type="number" step="0.01" placeholder="0"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Vade (ay)</label><input id="loan-term-${bank.id}" type="number" placeholder="12"></div>
+        <div class="fg"><label class="fl">Ödeme Günü</label><input id="loan-day-${bank.id}" type="number" min="1" max="31" placeholder="10"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Başlangıç</label><input id="loan-start-${bank.id}" type="date"></div>
+        <div class="fg"><label class="fl">Aylık Taksit</label><input id="loan-monthly-${bank.id}" type="number" placeholder="0"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="loan-late-${bank.id}" type="number" step="0.01" placeholder="0"></div>
+        <div class="fg"><label class="fl">Belge Yükle (Mock)</label><input id="loan-doc-${bank.id}" type="file"></div>
+      </div>
+      <div id="loan-doc-res-${bank.id}" class="u-muted-11 u-mb-8"></div>
+      <button class="btn bghost bsm" data-action="mockExtractLoanDoc" data-args="${bank.id}">Belgeden Doldur (Mock)</button>
+      <button class="btn bacc2 u-mt-10" data-action="addBankLoan" data-args="${bank.id}">Kredi Ekle</button>
+    </div>`;
+  }
+  return `<div class="card">
+    <div class="ct">Yeni Kredi Kartı</div>
+    <div class="fg2">
+      <div class="fg"><label class="fl">Kart Adı</label><input id="card-name-${bank.id}" placeholder="World Platinum"></div>
+      <div class="fg"><label class="fl">Son 4 Hane</label><input id="card-last4-${bank.id}" maxlength="4" placeholder="0000"></div>
+    </div>
+    <div class="fg2">
+      <div class="fg"><label class="fl">Güncel Borç</label><input id="card-debt-${bank.id}" type="number" placeholder="0"></div>
+      <div class="fg"><label class="fl">Aylık Harcama</label><input id="card-monthly-${bank.id}" type="number" placeholder="0"></div>
+    </div>
+    <div class="fg2">
+      <div class="fg"><label class="fl">Asgari Ödeme</label><input id="card-min-${bank.id}" type="number" placeholder="0"></div>
+      <div class="fg"><label class="fl">Ödeme Günü</label><input id="card-day-${bank.id}" type="number" min="1" max="31" placeholder="10"></div>
+    </div>
+    <div class="fg2">
+      <div class="fg"><label class="fl">Son Ödeme Tarihi</label><input id="card-due-${bank.id}" type="date"></div>
+      <div class="fg"><label class="fl">Yıllık Faiz (%)</label><input id="card-rate-${bank.id}" type="number" step="0.01" placeholder="0"></div>
+    </div>
+    <div class="fg2">
+      <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="card-late-${bank.id}" type="number" step="0.01" placeholder="0"></div>
+      <div class="fg"><label class="fl">Belge Yükle (Mock)</label><input id="card-doc-${bank.id}" type="file"></div>
+    </div>
+    <div id="card-doc-res-${bank.id}" class="u-muted-11 u-mb-8"></div>
+    <button class="btn bghost bsm" data-action="mockExtractCardDoc" data-args="${bank.id}">Belgeden Doldur (Mock)</button>
+    <button class="btn bacc2 u-mt-10" data-action="addBankCard" data-args="${bank.id}">Kredi Kartı Ekle</button>
+  </div>`;
 }
-function renderMonthlyTbl(){
-  const sel=document.getElementById('monthly-sel'); if(!sel) return;
-  const accId=parseInt(sel.value);
-  const ayIsimleri=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
-  const bugun=new Date();
-  const ms=Array.from({length:12},(_,i)=>{const d=new Date(bugun.getFullYear(),bugun.getMonth()+i);return ayIsimleri[d.getMonth()]+' '+(d.getFullYear()%100).toString().padStart(2,'0');});
-  const stored=monthlyData[accId]||{};
-  const hdrs=`<tr><th>Ay</th><th>Açılış Bakiyesi (₺)</th><th>Gelir (₺)</th><th>Gider (₺)</th><th>Kapanış (₺)</th></tr>`;
-  const rows=ms.map(m=>{
-    const d=stored[m]||{op:'',inc:'',exp:''};
-    const cl=(parseFloat(d.op)||0)+(parseFloat(d.inc)||0)-(parseFloat(d.exp)||0);
-    const show=d.op!==''||d.inc!==''||d.exp!=='';
-    return `<tr><td>${m}</td>
-      <td><input type="number" value="${d.op}" placeholder="0" oninput="updMonthly(${accId},'${m}','op',this.value)" style="width:100px;text-align:right"></td>
-      <td><input type="number" value="${d.inc}" placeholder="0" oninput="updMonthly(${accId},'${m}','inc',this.value)" style="width:100px;text-align:right"></td>
-      <td><input type="number" value="${d.exp}" placeholder="0" oninput="updMonthly(${accId},'${m}','exp',this.value)" style="width:100px;text-align:right"></td>
-      <td class="${show?(cl>=0?'pos':'neg'):''}">${show?fmt(cl):'—'}</td></tr>`;
-  }).join('');
-  document.getElementById('monthly-tbl').innerHTML=`<thead>${hdrs}</thead><tbody>${rows}</tbody>`;
+
+function addBankRoot(){
+  const name=(document.getElementById('bank-new-name')?.value||'').trim();
+  const icon=(document.getElementById('bank-new-icon')?.value||'').trim();
+  if(!name){ showNotif('Banka adı gerekli','⚠'); return; }
+  banks.push({id:Date.now(),name,icon:icon||BANK_ICONS[name]||'🏦',expanded:true,accounts:[],loans:[],cards:[],formMode:''});
+  renderBanksPage();
+  showNotif(name+' eklendi','🏦');
 }
-function updMonthly(aId,m,f,v){if(!monthlyData[aId])monthlyData[aId]={};if(!monthlyData[aId][m])monthlyData[aId][m]={op:'',inc:'',exp:''};monthlyData[aId][m][f]=v;}
-function saveMonthly(){
-  const sel=document.getElementById('monthly-sel'); if(!sel) return;
-  const aId=parseInt(sel.value);
-  const ayIsimleri=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
-  const bugun=new Date();
-  const ms=Array.from({length:12},(_,i)=>{const d=new Date(bugun.getFullYear(),bugun.getMonth()+i);return ayIsimleri[d.getMonth()]+' '+(d.getFullYear()%100).toString().padStart(2,'0');});
-  const stored=monthlyData[aId]||{};
-  const vals=ms.map(m=>{const d=stored[m]||{};return(parseFloat(d.op)||0)+(parseFloat(d.inc)||0)-(parseFloat(d.exp)||0);});
-  const max=Math.max(...vals.map(Math.abs),1);
-  document.getElementById('monthly-chart').innerHTML=ms.map((m,i)=>`
-    <div style="flex:1;display:flex;flex-direction:column;align-items:center">
-      <div title="${fmt(vals[i])}" style="width:100%;border-radius:3px 3px 0 0;background:${vals[i]>=0?'var(--teal)':'var(--red)'};height:${Math.round(Math.abs(vals[i])/max*80)}px;min-height:2px;opacity:.85;transition:height .4s"></div>
-      <div style="font-size:9.5px;color:var(--text3);margin-top:4px">${m}</div>
-    </div>`).join('');
-  showNotif('Aylık özet kaydedildi','📊');
+
+function toggleBankExpand(bankId){
+  const bank=banks.find(b=>b.id===Number(bankId)); if(!bank) return;
+  bank.expanded=!bank.expanded;
+  renderBankTree();
+}
+
+function setBankForm(bankId, mode){
+  const bank=banks.find(b=>b.id===Number(bankId)); if(!bank) return;
+  bank.formMode=mode;
+  bank.expanded=true;
+  renderBankTree();
+}
+
+function addBankAccount(bankId){
+  const b=banks.find(x=>x.id===Number(bankId)); if(!b) return;
+  const type=document.getElementById(`acc-type-${b.id}`)?.value||'Vadesiz';
+  const no=(document.getElementById(`acc-no-${b.id}`)?.value||'0000').slice(-4);
+  const balance=parseFloat(document.getElementById(`acc-bal-${b.id}`)?.value)||0;
+  const currency=document.getElementById(`acc-cur-${b.id}`)?.value||'TRY';
+  b.accounts.push({id:Date.now(),type,no,balance,currency,iban:''});
+  b.formMode='';
+  renderBankTree();
+  showNotif('Hesap eklendi','＋');
+}
+
+function addBankLoan(bankId){
+  const b=banks.find(x=>x.id===Number(bankId)); if(!b) return;
+  const loan={
+    id:Date.now(),
+    name:(document.getElementById(`loan-name-${b.id}`)?.value||'Kredi').trim(),
+    principal:parseFloat(document.getElementById(`loan-principal-${b.id}`)?.value)||0,
+    remaining:parseFloat(document.getElementById(`loan-rem-${b.id}`)?.value)||0,
+    annualRate:parseFloat(document.getElementById(`loan-rate-${b.id}`)?.value)||0,
+    termMonths:parseInt(document.getElementById(`loan-term-${b.id}`)?.value||'0',10)||0,
+    paymentDay:parseInt(document.getElementById(`loan-day-${b.id}`)?.value||'0',10)||1,
+    startDate:document.getElementById(`loan-start-${b.id}`)?.value||'',
+    monthlyInstallment:parseFloat(document.getElementById(`loan-monthly-${b.id}`)?.value)||0,
+    lateRate:parseFloat(document.getElementById(`loan-late-${b.id}`)?.value)||0
+  };
+  b.loans.push(loan);
+  b.formMode='';
+  renderBankTree();
+  showNotif('Kredi eklendi','📄');
+}
+
+function addBankCard(bankId){
+  const b=banks.find(x=>x.id===Number(bankId)); if(!b) return;
+  const card={
+    id:Date.now(),
+    name:(document.getElementById(`card-name-${b.id}`)?.value||'Kredi Kartı').trim(),
+    last4:(document.getElementById(`card-last4-${b.id}`)?.value||'0000').slice(-4),
+    currentDebt:parseFloat(document.getElementById(`card-debt-${b.id}`)?.value)||0,
+    monthlySpend:parseFloat(document.getElementById(`card-monthly-${b.id}`)?.value)||0,
+    minPayment:parseFloat(document.getElementById(`card-min-${b.id}`)?.value)||0,
+    dueDay:parseInt(document.getElementById(`card-day-${b.id}`)?.value||'0',10)||1,
+    dueDate:document.getElementById(`card-due-${b.id}`)?.value||'',
+    annualRate:parseFloat(document.getElementById(`card-rate-${b.id}`)?.value)||0,
+    lateRate:parseFloat(document.getElementById(`card-late-${b.id}`)?.value)||0
+  };
+  b.cards.push(card);
+  b.formMode='';
+  renderBankTree();
+  showNotif('Kredi kartı eklendi','💳');
+}
+
+function mockExtractLoanDoc(bankId){
+  const b=banks.find(x=>x.id===Number(bankId)); if(!b) return;
+  const name=document.getElementById(`loan-doc-${b.id}`)?.files?.[0]?.name||'dokuman.pdf';
+  document.getElementById(`loan-name-${b.id}`).value='Konut Kredisi';
+  document.getElementById(`loan-principal-${b.id}`).value='550000';
+  document.getElementById(`loan-rem-${b.id}`).value='487300';
+  document.getElementById(`loan-rate-${b.id}`).value='3.49';
+  document.getElementById(`loan-term-${b.id}`).value='120';
+  document.getElementById(`loan-day-${b.id}`).value='12';
+  document.getElementById(`loan-monthly-${b.id}`).value='18450';
+  document.getElementById(`loan-late-${b.id}`).value='5.25';
+  const box=document.getElementById(`loan-doc-res-${b.id}`);
+  if(box) box.textContent=`✓ ${name} üzerinden örnek alanlar dolduruldu (mock).`;
+}
+
+function mockExtractCardDoc(bankId){
+  const b=banks.find(x=>x.id===Number(bankId)); if(!b) return;
+  const name=document.getElementById(`card-doc-${b.id}`)?.files?.[0]?.name||'ekstre.pdf';
+  document.getElementById(`card-name-${b.id}`).value='Platinum';
+  document.getElementById(`card-last4-${b.id}`).value='4509';
+  document.getElementById(`card-debt-${b.id}`).value='12840';
+  document.getElementById(`card-monthly-${b.id}`).value='9680';
+  document.getElementById(`card-min-${b.id}`).value='1926';
+  document.getElementById(`card-day-${b.id}`).value='10';
+  document.getElementById(`card-rate-${b.id}`).value='42.5';
+  document.getElementById(`card-late-${b.id}`).value='62';
+  const box=document.getElementById(`card-doc-res-${b.id}`);
+  if(box) box.textContent=`✓ ${name} üzerinden örnek kart alanları dolduruldu (mock).`;
 }
 
 // ═══ INVESTMENTS ═══
@@ -932,7 +1167,7 @@ function refreshSettingsCounts() {
   document.getElementById('count-transactions').textContent  = allTx.length + ' kayıt';
   document.getElementById('count-income').textContent        = income + ' kayıt';
   document.getElementById('count-expense').textContent       = expense + ' kayıt';
-  document.getElementById('count-banks').textContent         = bankAccs.length + ' hesap';
+  document.getElementById('count-banks').textContent         = totalBankAccounts() + ' hesap';
   document.getElementById('count-investments').textContent   = investments.length + ' hesap';
   document.getElementById('count-crypto').textContent        = cryptoPortfolio.length + ' coin';
   document.getElementById('count-bills').textContent         = bills.length + ' fatura';
@@ -965,7 +1200,7 @@ async function clearData(type) {
     transactions: allTx.length + ' kayıt',
     income:       allTx.filter(t=>t.type==='gelir').length + ' kayıt',
     expense:      allTx.filter(t=>t.type==='gider').length + ' kayıt',
-    banks:        bankAccs.length + ' hesap',
+    banks:        totalBankAccounts() + ' hesap',
     investments:  investments.length + ' hesap',
     crypto:       cryptoPortfolio.length + ' coin',
     bnc:          bncPortfolio.length + ' coin',
@@ -999,7 +1234,7 @@ async function clearData(type) {
       toRemE.forEach(id => { const i = allTx.findIndex(t=>t.id===id); if(i>-1) allTx.splice(i,1); });
       break;
     case 'banks':
-      bankAccs.splice(0, bankAccs.length);
+      banks.splice(0, banks.length);
       break;
     case 'investments':
       investments.splice(0, investments.length);
@@ -1024,7 +1259,7 @@ async function clearData(type) {
       break;
     case 'all':
       allTx.splice(0, allTx.length);
-      bankAccs.splice(0, bankAccs.length);
+      banks.splice(0, banks.length);
       investments.splice(0, investments.length);
       cryptoPortfolio.splice(0, cryptoPortfolio.length);
       bncPortfolio.splice(0, bncPortfolio.length);
@@ -1178,7 +1413,7 @@ async function createGcalEvent(summary, date, amount, urgent=false) {
 // LOCAL STORAGE — Veri Kalıcılığı
 // ═══════════════════════════════════════════════════════
 const STORAGE_SCHEMA_KEY = 'finansai_schema_version';
-const STORAGE_SCHEMA_VERSION = 2;
+const STORAGE_SCHEMA_VERSION = 3;
 
 function safeParseJSON(raw, fallback){
   try { return JSON.parse(raw); } catch { return fallback; }
@@ -1187,12 +1422,23 @@ function safeParseJSON(raw, fallback){
 function runStorageMigrations(){
   const current = parseInt(localStorage.getItem(STORAGE_SCHEMA_KEY)||'1',10);
   if(current >= STORAGE_SCHEMA_VERSION) return;
-  // v1 -> v2: Bozuk monthly datayi temizle
-  const monthlyRaw = localStorage.getItem('finansai_monthly');
-  if(monthlyRaw){
-    const parsed = safeParseJSON(monthlyRaw, {});
-    if(!parsed || typeof parsed !== 'object'){
-      localStorage.removeItem('finansai_monthly');
+  if(current < 2){
+    const monthlyRaw = localStorage.getItem('finansai_monthly');
+    if(monthlyRaw){
+      const parsed = safeParseJSON(monthlyRaw, {});
+      if(!parsed || typeof parsed !== 'object'){
+        localStorage.removeItem('finansai_monthly');
+      }
+    }
+  }
+  if(current < 3){
+    const newBanksRaw = localStorage.getItem('finansai_banks');
+    if(!newBanksRaw){
+      const legacy = safeParseJSON(localStorage.getItem('finansai_bankaccs')||'[]', []);
+      if(Array.isArray(legacy) && legacy.length){
+        migrateLegacyBanks(legacy);
+        localStorage.setItem('finansai_banks', JSON.stringify(banks));
+      }
     }
   }
   localStorage.setItem(STORAGE_SCHEMA_KEY, String(STORAGE_SCHEMA_VERSION));
@@ -1202,7 +1448,8 @@ function saveData() {
   try {
     localStorage.setItem('finansai_bills', JSON.stringify(bills));
     localStorage.setItem('finansai_installments', JSON.stringify(installments));
-    localStorage.setItem('finansai_bankaccs', JSON.stringify(bankAccs));
+    localStorage.setItem('finansai_banks', JSON.stringify(banks));
+    localStorage.setItem('finansai_bankaccs', JSON.stringify([]));
     localStorage.setItem('finansai_investments', JSON.stringify(investments));
     localStorage.setItem('finansai_crypto', JSON.stringify(cryptoPortfolio));
     localStorage.setItem('finansai_monthly', JSON.stringify(monthlyData));
@@ -1217,7 +1464,13 @@ function loadData() {
     runStorageMigrations();
     const b = localStorage.getItem('finansai_bills'); if(b) bills.splice(0, bills.length, ...safeParseJSON(b, []));
     const i = localStorage.getItem('finansai_installments'); if(i) installments.splice(0, installments.length, ...safeParseJSON(i, []));
-    const ba = localStorage.getItem('finansai_bankaccs'); if(ba) bankAccs.splice(0, bankAccs.length, ...safeParseJSON(ba, []));
+    const b2 = localStorage.getItem('finansai_banks');
+    if(b2) {
+      banks = safeParseJSON(b2, banks);
+    } else {
+      const ba = localStorage.getItem('finansai_bankaccs');
+      if(ba) migrateLegacyBanks(safeParseJSON(ba, []));
+    }
     const inv = localStorage.getItem('finansai_investments'); if(inv) investments.splice(0, investments.length, ...safeParseJSON(inv, []));
     const cr = localStorage.getItem('finansai_crypto'); if(cr) cryptoPortfolio.splice(0, cryptoPortfolio.length, ...safeParseJSON(cr, []));
     const md = localStorage.getItem('finansai_monthly'); if(md) Object.assign(monthlyData, safeParseJSON(md, {}));
