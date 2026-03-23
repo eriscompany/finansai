@@ -1,0 +1,4 @@
+bank_name,bank_icon,product_type,product_name,last4,account_type,balance,currency,loan_principal,loan_remaining,loan_annual_rate,loan_term_months,loan_payment_day,loan_start_date,loan_monthly,loan_late_rate,card_current_debt,card_monthly_spend,card_min_payment,card_due_day,card_due_date,card_annual_rate,card_late_rate
+Garanti BBVA,🟠,account,Vadesiz Hesap,4521,Vadesiz,28750,TRY,,,,,,,,,,,,,,
+İş Bankası,🔵,loan,Tatil Kredisi,,,,,30000,18250,35,12,12,2025-12-01,2750,52,,,,,,,
+Akbank,🔴,card,Axess,1204,,,,,,,,,,,,12840,6200,1926,10,2026-04-10,45.5,62

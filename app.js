@@ -413,9 +413,259 @@ function renderBanksPage(){
         </div>
       </div>
     </div>
+    <div class="card bank-import-card">
+      <div class="ct">CSV / Excel İçe Aktar</div>
+      <div class="u-muted-12 u-mb-8">Excel şablonunu indir, satırları doldur, CSV veya Excel XML olarak içe aktar.</div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Dosya</label><input id="bank-import-file" type="file" accept=".csv,.txt,.xml,.xls,text/csv,text/plain,application/xml"></div>
+        <div class="fg"><label class="fl">Şablon</label><div class="u-flex u-gap-8"><button class="btn bghost u-full" data-action="downloadBankTemplate">CSV Şablon</button><button class="btn bghost u-full" data-action="downloadBankTemplateExcel">Excel Şablon</button></div></div>
+      </div>
+      <div class="u-muted-11">product_type alanı: account | loan | card. Her satır tek ürün temsil eder.</div>
+      <div class="u-flex u-gap-8">
+        <button class="btn bacc2" data-action="importBanksCsv">CSV Yükle ve İşle</button>
+        <button class="btn bghost" data-action="replaceBanksByCsv">CSV ile Değiştir (mevcutları sil)</button>
+      </div>
+      <div id="bank-import-res" class="u-muted-11 u-mt-10"></div>
+    </div>
     <div id="bank-tree" class="bank-tree"></div>
   `;
   renderBankTree();
+}
+
+function parseFlexibleCsv(text){
+  const lines = text.split(/\r?\n/).filter(Boolean);
+  if(!lines.length) return [];
+  const delim = lines[0].includes(';') ? ';' : ',';
+  const parseLine = (line)=>{
+    const out=[]; let cur=''; let q=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i];
+      if(ch==='"'){ q=!q; continue; }
+      if(ch===delim && !q){ out.push(cur.trim()); cur=''; continue; }
+      cur+=ch;
+    }
+    out.push(cur.trim());
+    return out;
+  };
+  const headers=parseLine(lines[0]).map(h=>h.toLowerCase());
+  return lines.slice(1).map(line=>{
+    const vals=parseLine(line);
+    const obj={};
+    headers.forEach((h,idx)=>{ obj[h]=vals[idx]??''; });
+    return obj;
+  }).filter(r=>Object.values(r).some(v=>String(v).trim()!==''));
+}
+
+function parseExcelXmlRows(xmlText){
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(xmlText, 'application/xml');
+  const rows = Array.from(doc.getElementsByTagName('Row'));
+  if(!rows.length) return [];
+  const rowToArray = (row)=>{
+    const cells = Array.from(row.getElementsByTagName('Cell'));
+    return cells.map(cell=>{
+      const d = cell.getElementsByTagName('Data')[0];
+      return d ? String(d.textContent||'').trim() : '';
+    });
+  };
+  const headers = rowToArray(rows[0]).map(h=>h.toLowerCase());
+  const out = [];
+  for(let i=1;i<rows.length;i++){
+    const vals = rowToArray(rows[i]);
+    const obj = {};
+    headers.forEach((h,idx)=>{ obj[h]=vals[idx]??''; });
+    if(Object.values(obj).some(v=>String(v).trim()!=='')) out.push(obj);
+  }
+  return out;
+}
+
+function getOrCreateBankByName(name, icon=''){
+  let bank = banks.find(b=>b.name.toLowerCase()===String(name).toLowerCase());
+  if(!bank){
+    bank={id:Date.now()+Math.floor(Math.random()*100000),name,icon:icon||BANK_ICONS[name]||'🏦',logoDataUrl:'',expanded:false,accounts:[],loans:[],cards:[]};
+    banks.push(bank);
+  } else if(icon && !bank.icon){
+    bank.icon=icon;
+  }
+  return bank;
+}
+
+function toNum(v){ const n=parseFloat(String(v||'').replace(',','.')); return Number.isFinite(n)?n:0; }
+function toInt(v){ const n=parseInt(v,10); return Number.isFinite(n)?n:0; }
+
+function importRowsToBanks(rows){
+  let added=0;
+  rows.forEach(r=>{
+    const bankName=(r.bank_name||'').trim();
+    if(!bankName) return;
+    const bank=getOrCreateBankByName(bankName,(r.bank_icon||'').trim());
+    const type=(r.product_type||'').trim().toLowerCase();
+    if(type==='account'){
+      bank.accounts.push({
+        id:Date.now()+Math.floor(Math.random()*100000),
+        type:(r.account_type||r.product_name||'Vadesiz').trim(),
+        no:(r.last4||'0000').slice(-4),
+        balance:toNum(r.balance),
+        iban:'',
+        currency:(r.currency||'TRY').trim()||'TRY'
+      });
+      added++;
+      return;
+    }
+    if(type==='loan'){
+      bank.loans.push({
+        id:Date.now()+Math.floor(Math.random()*100000),
+        name:(r.product_name||'Kredi').trim(),
+        principal:toNum(r.loan_principal),
+        remaining:toNum(r.loan_remaining),
+        annualRate:toNum(r.loan_annual_rate),
+        termMonths:toInt(r.loan_term_months),
+        paymentDay:toInt(r.loan_payment_day)||1,
+        startDate:(r.loan_start_date||'').trim(),
+        monthlyInstallment:toNum(r.loan_monthly),
+        lateRate:toNum(r.loan_late_rate)
+      });
+      added++;
+      return;
+    }
+    if(type==='card'){
+      bank.cards.push({
+        id:Date.now()+Math.floor(Math.random()*100000),
+        name:(r.product_name||'Kredi Kartı').trim(),
+        last4:(r.last4||'0000').slice(-4),
+        currentDebt:toNum(r.card_current_debt),
+        monthlySpend:toNum(r.card_monthly_spend),
+        minPayment:toNum(r.card_min_payment),
+        dueDay:toInt(r.card_due_day)||1,
+        dueDate:(r.card_due_date||'').trim(),
+        annualRate:toNum(r.card_annual_rate),
+        lateRate:toNum(r.card_late_rate)
+      });
+      added++;
+    }
+  });
+  return added;
+}
+
+function downloadBankTemplate(){
+  const csvHeader = 'bank_name,bank_icon,product_type,product_name,last4,account_type,balance,currency,loan_principal,loan_remaining,loan_annual_rate,loan_term_months,loan_payment_day,loan_start_date,loan_monthly,loan_late_rate,card_current_debt,card_monthly_spend,card_min_payment,card_due_day,card_due_date,card_annual_rate,card_late_rate';
+  const rows = [
+    'Garanti BBVA,🟠,account,Vadesiz Hesap,4521,Vadesiz,28750,TRY,,,,,,,,,,,,,,',
+    'İş Bankası,🔵,loan,Tatil Kredisi,,,,,30000,18250,35,12,12,2025-12-01,2750,52,,,,,,,',
+    'Akbank,🔴,card,Axess,1204,,,,,,,,,,,,12840,6200,1926,10,2026-04-10,45.5,62'
+  ];
+  const blob = new Blob([`${csvHeader}\n${rows.join('\n')}\n`], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bank_import_template.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function importBanksCsv(){
+  const input = document.getElementById('bank-import-file');
+  const res = document.getElementById('bank-import-res');
+  const file = input?.files?.[0];
+  if(!file){ if(res) res.textContent='Lütfen bir CSV dosyası seçin.'; return; }
+  const text = await file.text();
+  const rows = (text.trim().startsWith('<?xml') || text.includes('<Workbook'))
+    ? parseExcelXmlRows(text)
+    : parseFlexibleCsv(text);
+  const added = importRowsToBanks(rows);
+  renderBanksPage();
+  showNotif(`${added} kayıt içe aktarıldı`,'📥');
+  if(res) res.textContent = `✓ ${added} kayıt aktarıldı.`;
+}
+
+async function replaceBanksByCsv(){
+  const input = document.getElementById('bank-import-file');
+  const res = document.getElementById('bank-import-res');
+  const file = input?.files?.[0];
+  if(!file){ if(res) res.textContent='Lütfen bir CSV dosyası seçin.'; return; }
+  const text = await file.text();
+  const rows = (text.trim().startsWith('<?xml') || text.includes('<Workbook'))
+    ? parseExcelXmlRows(text)
+    : parseFlexibleCsv(text);
+  banks.splice(0,banks.length);
+  const added = importRowsToBanks(rows);
+  renderBanksPage();
+  showNotif(`Bankalar CSV ile yenilendi (${added})`,'📥');
+  if(res) res.textContent = `✓ Mevcut bankalar silinip ${added} kayıt aktarıldı.`;
+}
+
+function downloadBankTemplateExcel(){
+  const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Worksheet ss:Name="Template">
+  <Table>
+   <Row>
+    <Cell><Data ss:Type="String">bank_name</Data></Cell>
+    <Cell><Data ss:Type="String">bank_icon</Data></Cell>
+    <Cell><Data ss:Type="String">product_type</Data></Cell>
+    <Cell><Data ss:Type="String">product_name</Data></Cell>
+    <Cell><Data ss:Type="String">last4</Data></Cell>
+    <Cell><Data ss:Type="String">account_type</Data></Cell>
+    <Cell><Data ss:Type="String">balance</Data></Cell>
+    <Cell><Data ss:Type="String">currency</Data></Cell>
+    <Cell><Data ss:Type="String">loan_principal</Data></Cell>
+    <Cell><Data ss:Type="String">loan_remaining</Data></Cell>
+    <Cell><Data ss:Type="String">loan_annual_rate</Data></Cell>
+    <Cell><Data ss:Type="String">loan_term_months</Data></Cell>
+    <Cell><Data ss:Type="String">loan_payment_day</Data></Cell>
+    <Cell><Data ss:Type="String">loan_start_date</Data></Cell>
+    <Cell><Data ss:Type="String">loan_monthly</Data></Cell>
+    <Cell><Data ss:Type="String">loan_late_rate</Data></Cell>
+    <Cell><Data ss:Type="String">card_current_debt</Data></Cell>
+    <Cell><Data ss:Type="String">card_monthly_spend</Data></Cell>
+    <Cell><Data ss:Type="String">card_min_payment</Data></Cell>
+    <Cell><Data ss:Type="String">card_due_day</Data></Cell>
+    <Cell><Data ss:Type="String">card_due_date</Data></Cell>
+    <Cell><Data ss:Type="String">card_annual_rate</Data></Cell>
+    <Cell><Data ss:Type="String">card_late_rate</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Garanti BBVA</Data></Cell><Cell><Data ss:Type="String">🟠</Data></Cell><Cell><Data ss:Type="String">account</Data></Cell><Cell><Data ss:Type="String">Vadesiz Hesap</Data></Cell><Cell><Data ss:Type="String">4521</Data></Cell><Cell><Data ss:Type="String">Vadesiz</Data></Cell><Cell><Data ss:Type="String">28750</Data></Cell><Cell><Data ss:Type="String">TRY</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">İş Bankası</Data></Cell><Cell><Data ss:Type="String">🔵</Data></Cell><Cell><Data ss:Type="String">loan</Data></Cell><Cell><Data ss:Type="String">Tatil Kredisi</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">30000</Data></Cell><Cell><Data ss:Type="String">18250</Data></Cell><Cell><Data ss:Type="String">35</Data></Cell><Cell><Data ss:Type="String">12</Data></Cell><Cell><Data ss:Type="String">12</Data></Cell><Cell><Data ss:Type="String">2025-12-01</Data></Cell><Cell><Data ss:Type="String">2750</Data></Cell><Cell><Data ss:Type="String">52</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Akbank</Data></Cell><Cell><Data ss:Type="String">🔴</Data></Cell><Cell><Data ss:Type="String">card</Data></Cell><Cell><Data ss:Type="String">Axess</Data></Cell><Cell><Data ss:Type="String">1204</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">12840</Data></Cell><Cell><Data ss:Type="String">6200</Data></Cell><Cell><Data ss:Type="String">1926</Data></Cell><Cell><Data ss:Type="String">10</Data></Cell><Cell><Data ss:Type="String">2026-04-10</Data></Cell><Cell><Data ss:Type="String">45.5</Data></Cell><Cell><Data ss:Type="String">62</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Rehber">
+  <Table>
+   <Row><Cell><Data ss:Type="String">Alan</Data></Cell><Cell><Data ss:Type="String">Açıklama</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">product_type</Data></Cell><Cell><Data ss:Type="String">account, loan veya card olmalı</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">bank_name</Data></Cell><Cell><Data ss:Type="String">Aynı isimli satırlar aynı bankaya eklenir</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">last4</Data></Cell><Cell><Data ss:Type="String">Hesap/kart için son 4 hane</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">loan_*</Data></Cell><Cell><Data ss:Type="String">Sadece kredi satırlarında doldur</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">card_*</Data></Cell><Cell><Data ss:Type="String">Sadece kart satırlarında doldur</Data></Cell></Row>
+  </Table>
+ </Worksheet>
+</Workbook>`;
+  const blob = new Blob([xml], { type: 'application/xml;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bank_import_template_excel.xml';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function renderBankTree(){

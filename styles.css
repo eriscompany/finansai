@@ -205,6 +205,7 @@ input::placeholder { color: var(--text3); }
 
 /* Bank page polish */
 .bank-tree { margin-top: 12px; }
+.bank-import-card { margin-top: 12px; }
 .bank-card { margin-bottom: 10px; background: linear-gradient(180deg, rgba(74,158,255,.06), transparent 30%), var(--bg2); }
 .bank-head { display: flex; align-items: center; gap: 10px; }
 .bank-head-icon {

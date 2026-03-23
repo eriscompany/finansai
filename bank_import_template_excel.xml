@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Worksheet ss:Name="Template">
+  <Table>
+   <Row>
+    <Cell><Data ss:Type="String">bank_name</Data></Cell>
+    <Cell><Data ss:Type="String">bank_icon</Data></Cell>
+    <Cell><Data ss:Type="String">product_type</Data></Cell>
+    <Cell><Data ss:Type="String">product_name</Data></Cell>
+    <Cell><Data ss:Type="String">last4</Data></Cell>
+    <Cell><Data ss:Type="String">account_type</Data></Cell>
+    <Cell><Data ss:Type="String">balance</Data></Cell>
+    <Cell><Data ss:Type="String">currency</Data></Cell>
+    <Cell><Data ss:Type="String">loan_principal</Data></Cell>
+    <Cell><Data ss:Type="String">loan_remaining</Data></Cell>
+    <Cell><Data ss:Type="String">loan_annual_rate</Data></Cell>
+    <Cell><Data ss:Type="String">loan_term_months</Data></Cell>
+    <Cell><Data ss:Type="String">loan_payment_day</Data></Cell>
+    <Cell><Data ss:Type="String">loan_start_date</Data></Cell>
+    <Cell><Data ss:Type="String">loan_monthly</Data></Cell>
+    <Cell><Data ss:Type="String">loan_late_rate</Data></Cell>
+    <Cell><Data ss:Type="String">card_current_debt</Data></Cell>
+    <Cell><Data ss:Type="String">card_monthly_spend</Data></Cell>
+    <Cell><Data ss:Type="String">card_min_payment</Data></Cell>
+    <Cell><Data ss:Type="String">card_due_day</Data></Cell>
+    <Cell><Data ss:Type="String">card_due_date</Data></Cell>
+    <Cell><Data ss:Type="String">card_annual_rate</Data></Cell>
+    <Cell><Data ss:Type="String">card_late_rate</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Garanti BBVA</Data></Cell><Cell><Data ss:Type="String">🟠</Data></Cell><Cell><Data ss:Type="String">account</Data></Cell><Cell><Data ss:Type="String">Vadesiz Hesap</Data></Cell><Cell><Data ss:Type="String">4521</Data></Cell><Cell><Data ss:Type="String">Vadesiz</Data></Cell><Cell><Data ss:Type="String">28750</Data></Cell><Cell><Data ss:Type="String">TRY</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">İş Bankası</Data></Cell><Cell><Data ss:Type="String">🔵</Data></Cell><Cell><Data ss:Type="String">loan</Data></Cell><Cell><Data ss:Type="String">Tatil Kredisi</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">30000</Data></Cell><Cell><Data ss:Type="String">18250</Data></Cell><Cell><Data ss:Type="String">35</Data></Cell><Cell><Data ss:Type="String">12</Data></Cell><Cell><Data ss:Type="String">12</Data></Cell><Cell><Data ss:Type="String">2025-12-01</Data></Cell><Cell><Data ss:Type="String">2750</Data></Cell><Cell><Data ss:Type="String">52</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">Akbank</Data></Cell><Cell><Data ss:Type="String">🔴</Data></Cell><Cell><Data ss:Type="String">card</Data></Cell><Cell><Data ss:Type="String">Axess</Data></Cell><Cell><Data ss:Type="String">1204</Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell><Cell><Data ss:Type="String"></Data></Cell>
+    <Cell><Data ss:Type="String">12840</Data></Cell><Cell><Data ss:Type="String">6200</Data></Cell><Cell><Data ss:Type="String">1926</Data></Cell><Cell><Data ss:Type="String">10</Data></Cell><Cell><Data ss:Type="String">2026-04-10</Data></Cell><Cell><Data ss:Type="String">45.5</Data></Cell><Cell><Data ss:Type="String">62</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Rehber">
+  <Table>
+   <Row><Cell><Data ss:Type="String">Alan</Data></Cell><Cell><Data ss:Type="String">Açıklama</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">product_type</Data></Cell><Cell><Data ss:Type="String">account, loan veya card olmalı</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">bank_name</Data></Cell><Cell><Data ss:Type="String">Aynı isimli satırlar aynı bankaya eklenir</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">last4</Data></Cell><Cell><Data ss:Type="String">Hesap/kart için son 4 hane</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">loan_*</Data></Cell><Cell><Data ss:Type="String">Sadece kredi satırlarında doldur</Data></Cell></Row>
+   <Row><Cell><Data ss:Type="String">card_*</Data></Cell><Cell><Data ss:Type="String">Sadece kart satırlarında doldur</Data></Cell></Row>
+  </Table>
+ </Worksheet>
+</Workbook>
