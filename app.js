@@ -44,6 +44,7 @@ let banks = [
     id: 1,
     name: "Garanti BBVA",
     icon: "🟠",
+    logoDataUrl: "",
     expanded: true,
     accounts: [
       { id: 11, type: "Vadesiz", no: "4521", balance: 28750, iban: "", currency: "TRY" }
@@ -55,6 +56,7 @@ let banks = [
     id: 2,
     name: "İş Bankası",
     icon: "🔵",
+    logoDataUrl: "",
     expanded: false,
     accounts: [
       { id: 21, type: "Tasarruf", no: "7832", balance: 12500, iban: "", currency: "TRY" }
@@ -79,6 +81,7 @@ let banks = [
     id: 3,
     name: "Akbank",
     icon: "🔴",
+    logoDataUrl: "",
     expanded: false,
     accounts: [],
     loans: [],
@@ -372,7 +375,7 @@ function migrateLegacyBanks(raw){
   legacy.forEach(a=>{
     const key=a.bank||'Banka';
     if(!map.has(key)){
-      map.set(key,{id:Date.now()+Math.floor(Math.random()*10000),name:key,icon:a.icon||BANK_ICONS[key]||'🏦',expanded:false,accounts:[],loans:[],cards:[]});
+      map.set(key,{id:Date.now()+Math.floor(Math.random()*10000),name:key,icon:a.icon||BANK_ICONS[key]||'🏦',logoDataUrl:'',expanded:false,accounts:[],loans:[],cards:[]});
     }
     const b=map.get(key);
     if(a.type==='Kredi'){
@@ -396,8 +399,9 @@ function renderBanksPage(){
         <div class="fg"><label class="fl">Banka Adı</label><input id="bank-new-name" placeholder="Örn: QNB Finansbank"></div>
         <div class="fg2">
           <div class="fg"><label class="fl">İkon</label><input id="bank-new-icon" placeholder="🏦"></div>
-          <div class="fg"><label class="fl">Referans Kod</label><input id="bank-new-code" placeholder="Opsiyonel"></div>
+          <div class="fg"><label class="fl">Logo Dosyası</label><input id="bank-new-logo" type="file" accept="image/*"></div>
         </div>
+        <div class="u-muted-11">Logo localStorage'a base64 olarak kaydedilir (kalıcı).</div>
         <button class="btn bacc2" data-action="addBankRoot">Banka Oluştur</button>
       </div>
       <div class="card">
@@ -424,7 +428,7 @@ function renderBankTree(){
     return `<div class="card bank-card">
       <div class="u-flex-between">
         <div class="bank-head">
-          <div class="bank-head-icon">${b.icon||'🏦'}</div>
+          <div class="bank-head-icon">${b.logoDataUrl ? `<img class="bank-head-logo" src="${b.logoDataUrl}" alt="${b.name} logo">` : (b.icon||'🏦')}</div>
           <div>
             <div class="bank-name">${b.name}</div>
             <div class="u-muted-11">Hesap ${b.accounts.length} · Kredi ${b.loans.length} · Kart ${b.cards.length}</div>
@@ -556,11 +560,35 @@ function renderBankForm(bank){
   </div>`;
 }
 
-function addBankRoot(){
+function fileToDataUrl(file){
+  return new Promise((resolve,reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result||''));
+    reader.onerror = () => reject(new Error('Logo okunamadı'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function addBankRoot(){
   const name=(document.getElementById('bank-new-name')?.value||'').trim();
   const icon=(document.getElementById('bank-new-icon')?.value||'').trim();
+  const logoInput = document.getElementById('bank-new-logo');
+  const logoFile = logoInput?.files?.[0] || null;
   if(!name){ showNotif('Banka adı gerekli','⚠'); return; }
-  banks.push({id:Date.now(),name,icon:icon||BANK_ICONS[name]||'🏦',expanded:true,accounts:[],loans:[],cards:[],formMode:''});
+  let logoDataUrl = '';
+  if(logoFile){
+    if(logoFile.size > 350 * 1024){
+      showNotif('Logo dosyası çok büyük (max 350KB)','⚠');
+      return;
+    }
+    try{
+      logoDataUrl = await fileToDataUrl(logoFile);
+    }catch{
+      showNotif('Logo yüklenemedi','⚠');
+      return;
+    }
+  }
+  banks.push({id:Date.now(),name,icon:icon||BANK_ICONS[name]||'🏦',logoDataUrl,expanded:true,accounts:[],loans:[],cards:[],formMode:''});
   renderBanksPage();
   showNotif(name+' eklendi','🏦');
 }
