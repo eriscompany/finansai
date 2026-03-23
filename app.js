@@ -936,7 +936,14 @@ function renderBankTree(){
         <div class="bank-head">
           <div class="bank-head-icon">${b.logoDataUrl ? `<img class="bank-head-logo" src="${b.logoDataUrl}" alt="${b.name} logo">` : (b.icon||'🏦')}</div>
           <div>
-            <div class="bank-name">${b.name}</div>
+            <div class="bank-name-row">
+              <div class="bank-name">${b.name}</div>
+              ${b.expanded ? `<div class="bank-head-actions">
+                <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'account'">+ Hesap</button>
+                <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'loan'">+ Kredi</button>
+                <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'card'">+ Kredi Kartı</button>
+              </div>` : ''}
+            </div>
             <div class="u-muted-11">Hesap ${b.accounts.length} · Kredi ${b.loans.length} · Kart ${b.cards.length}</div>
           </div>
         </div>
@@ -958,11 +965,6 @@ function renderBankTree(){
 function renderBankDetail(b){
   const detailTab = b.detailTab || 'accounts';
   return `<div class="bank-detail">
-    <div class="bank-actions">
-      <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'account'">+ Hesap</button>
-      <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'loan'">+ Kredi</button>
-      <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'card'">+ Kredi Kartı</button>
-    </div>
     ${renderBankForm(b)}
     <div class="tabs bank-subtabs">
       <div class="tab ${detailTab==='accounts'?'active':''}" data-action="setBankDetailTab" data-args="${b.id},'accounts'">Hesaplar</div>

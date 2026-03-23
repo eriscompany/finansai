@@ -234,6 +234,8 @@ input::placeholder { color: var(--text3); }
 }
 .bank-card { margin-bottom: 10px; background: linear-gradient(180deg, rgba(74,158,255,.06), transparent 30%), var(--bg2); }
 .bank-head { display: flex; align-items: center; gap: 10px; }
+.bank-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bank-head-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .bank-head-icon {
   width: 34px; height: 34px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
@@ -299,6 +301,7 @@ input::placeholder { color: var(--text3); }
   .bank-search-wrap { width: 100%; margin-top: 8px; }
   .bank-summary-grid { grid-template-columns: 1fr; }
   .bank-main-card { padding: 12px; }
+  .bank-head-actions .btn { width: 100%; }
   .bank-actions .btn { width: 100%; }
   .bank-inline-actions { flex-wrap: wrap; }
   .bank-inline-actions .btn { width: 100%; }
