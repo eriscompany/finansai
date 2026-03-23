@@ -863,6 +863,21 @@
       <div class="div"></div>
       <button class="btn bghost bsm u-full" data-action="saveDataAndNotify">💾 Manuel Kaydet</button>
     </div>
+
+    <div class="card">
+      <div class="ct">Google Takvim Entegrasyonu</div>
+      <div class="fg">
+        <label class="fl">Google Client ID</label>
+        <input id="gcal-client-id" placeholder="xxxxxxxx.apps.googleusercontent.com">
+      </div>
+      <div id="gcal-status" class="u-muted-11 u-mb-8">Durum: —</div>
+      <div class="u-flex u-gap-8">
+        <button id="gcal-save-btn" class="btn bghost bsm" data-action="saveGoogleClientIdFromSettings">Client ID Kaydet</button>
+        <button id="gcal-connect-btn" class="btn bacc2 bsm" data-action="connectGoogleCalendar">Google Bağlan</button>
+        <button class="btn bdanger2 bsm" data-action="disconnectGoogleCalendar">Bağlantıyı Kaldır</button>
+      </div>
+      <div class="u-muted-11 u-mt-10">Not: Kredi/Fatura hatırlatmalarının gerçek takvime eklenmesi için önce burada bağlantı yapmalısın.</div>
+    </div>
   </div>
 </div>
 

@@ -260,6 +260,47 @@ function updateDashCrypto(){
   }
 }
 
+function toIsoDate(dateObj){
+  return new Date(dateObj.getTime()-dateObj.getTimezoneOffset()*60000).toISOString().split('T')[0];
+}
+
+function getUpcomingPayments(limit=5){
+  const items = [];
+  bills.forEach(b=>{
+    items.push({
+      kind: 'bill',
+      id: `bill-${b.id}`,
+      icon: b.icon || '📄',
+      title: b.name,
+      due: b.due,
+      amount: Number(b.amount||0)
+    });
+  });
+  banks.forEach(bank=>{
+    (bank.loans||[]).forEach(loan=>{
+      const dueDate = getNextLoanDueDate(loan);
+      const dueIso = toIsoDate(dueDate);
+      const totalInst = Math.max(0, Number(loan.termMonths||0));
+      const paidInst = Math.max(0, Number(loan.paidInstallments||0));
+      if(totalInst>0 && paidInst>=totalInst) return;
+      const amount = Number(loan.monthlyInstallment||0) > 0
+        ? Number(loan.monthlyInstallment||0)
+        : Math.max(0, Number(loan.remaining||0));
+      items.push({
+        kind: 'loan',
+        id: `loan-${bank.id}-${loan.id}`,
+        icon: '📄',
+        title: `${bank.name} · ${loan.name}`,
+        due: dueIso,
+        amount
+      });
+    });
+  });
+  return items
+    .sort((a,b)=>new Date(a.due)-new Date(b.due))
+    .slice(0, limit);
+}
+
 // ═══ DASHBOARD ═══
 function initDash(){
   document.getElementById('dash-date').textContent=new Date().toLocaleDateString('tr-TR',{day:'2-digit',month:'long',year:'numeric'});
@@ -272,16 +313,17 @@ function initDash(){
       <div style="text-align:right"><div style="font-family:var(--mono);font-size:12.5px;color:var(--red)">${fmt(i.monthly)}/ay</div>
       <div style="font-size:10px;color:var(--text3)">${i.remaining} taksit kaldı</div></div>
     </div>`).join('')+`<div style="padding:7px 0;font-size:12px;display:flex;justify-content:space-between"><span style="color:var(--text3)">Toplam aylık taksit</span><span style="font-family:var(--mono);color:var(--red)">${fmt(instTotal)}</span></div>`;
-  // bills
-  document.getElementById('dash-bills').innerHTML=bills.slice(0,3).map(b=>{
-    const d=daysUntil(b.due); const st=billStatus(b.due);
+  // upcoming payments (bills + loan installments)
+  document.getElementById('dash-bills').innerHTML=getUpcomingPayments(6).map(p=>{
+    const d=daysUntil(p.due); const st=billStatus(p.due);
+    const kindLabel = p.kind==='loan' ? 'Kredi' : 'Fatura';
     return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)">
-      <span style="font-size:14px">${b.icon}</span>
-      <div style="flex:1"><div style="font-size:13px;font-weight:500">${b.name}</div><div style="font-size:10px;color:var(--text3)">${fmtDate(b.due)} · ${d>0?d+' gün':'bugün'}</div></div>
+      <span style="font-size:14px">${p.icon}</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${p.title}</div><div style="font-size:10px;color:var(--text3)">${kindLabel} · ${fmtDate(p.due)} · ${d>0?d+' gün':'bugün'}</div></div>
       <span class="badge ${st==='urgent'?'bdanger':st==='soon'?'bwarn':'bok'}">${st==='urgent'?'Acil':st==='soon'?'Yakında':'OK'}</span>
-      <div style="font-family:var(--mono);font-size:12.5px">${fmt(b.amount)}</div>
+      <div style="font-family:var(--mono);font-size:12.5px">${fmt(p.amount)}</div>
     </div>`;
-  }).join('');
+  }).join('') || '<div class="u-muted-11">Yaklaşan ödeme bulunmuyor.</div>';
   // crypto mini
   const cgIds=['bitcoin','ripple','ethereum','solana'];
   fetchCryptoPrices(cgIds).then(prices=>{
@@ -985,6 +1027,7 @@ function renderBankDetail(b){
               <div class="bank-detail-mono">Kalan: ${fmt(l.remaining)} · Aylık: ${fmt(l.monthlyInstallment||0)}</div>
               <div class="bank-inline-actions">
                 <button class="btn bghost bsm" data-action="syncLoanReminder" data-args="${b.id},${l.id}">Takvime Ekle (2 gün önce)</button>
+                <button class="btn bghost bsm" data-action="openLoanReminderInCalendar" data-args="${b.id},${l.id}">Takvimde Aç</button>
                 <button class="btn bacc2 bsm" data-action="markLoanInstallmentPaid" data-args="${b.id},${l.id}">Ödendi (OK)</button>
                 <button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'loan',${l.id}">Düzenle</button>
                 <button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'loan',${l.id}">Sil</button>
@@ -1449,9 +1492,26 @@ async function syncLoanReminder(bankId, loanId){
     showNotif('Takvim bağlantısı gerekli','⚠');
     return;
   }
+  if(event.simulated){
+    showNotif('Simülasyon: Google Takvim bağlantısı olmadan gerçek uyarı oluşmaz','ℹ');
+    return;
+  }
   l.lastReminderAt = Date.now();
+  l.lastReminderDate = remindIso;
+  l.lastReminderEventId = event.id || '';
+  l.lastReminderEventLink = event.htmlLink || '';
   renderBankTree();
   showNotif('Takvim hatırlatması eklendi','📅');
+}
+
+function openLoanReminderInCalendar(bankId, loanId){
+  const b = banks.find(x=>x.id===Number(bankId)); if(!b) return;
+  const l = b.loans.find(x=>x.id===Number(loanId)); if(!l) return;
+  if(l.lastReminderEventLink){
+    window.open(l.lastReminderEventLink, '_blank');
+    return;
+  }
+  showNotif('Önce gerçek takvim etkinliği oluşturmalısın','ℹ');
 }
 
 function markLoanInstallmentPaid(bankId, loanId){
@@ -1975,6 +2035,7 @@ function simCSV(){document.getElementById('csv-res').textContent='⏳ 312 işlem
 // ═══ SETTINGS ═══
 function initSettings() {
   refreshSettingsCounts();
+  refreshGoogleCalendarStatusUI();
   // Depolama boyutu
   try {
     let total = 0;
@@ -2167,11 +2228,63 @@ function showConfirm({ title='', msg='', detail='', icon='⚠', variant='danger'
 // ═══════════════════════════════════════════════════════
 // GOOGLE CALENDAR OAUTH (GitHub Pages Edition)
 // ═══════════════════════════════════════════════════════
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID_HERE'; // Google Cloud Console'dan al
+const GCAL_CLIENT_ID_PLACEHOLDER = 'YOUR_GOOGLE_CLIENT_ID_HERE';
+const GCAL_CLIENT_ID_STORAGE_KEY = 'finansai_google_client_id';
+let gcalClientId = localStorage.getItem(GCAL_CLIENT_ID_STORAGE_KEY) || GCAL_CLIENT_ID_PLACEHOLDER;
 const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
 let gcalToken = null;
 let gisLoaded = false;
 let tokenClient = null;
+
+function refreshGoogleCalendarStatusUI() {
+  const input = document.getElementById('gcal-client-id');
+  const status = document.getElementById('gcal-status');
+  const connectBtn = document.getElementById('gcal-connect-btn');
+  if (input) input.value = gcalClientId === GCAL_CLIENT_ID_PLACEHOLDER ? '' : gcalClientId;
+  if (status) {
+    if (gcalClientId === GCAL_CLIENT_ID_PLACEHOLDER) status.textContent = 'Durum: Client ID eksik';
+    else if (gcalToken) status.textContent = 'Durum: Bağlı';
+    else status.textContent = 'Durum: Hazır (bağlanmadı)';
+  }
+  if (connectBtn) connectBtn.textContent = gcalToken ? 'Yeniden Bağlan' : 'Google Bağlan';
+}
+
+function saveGoogleClientIdFromSettings() {
+  const input = document.getElementById('gcal-client-id');
+  if (!input) return;
+  const val = (input.value || '').trim();
+  if (!val) {
+    localStorage.removeItem(GCAL_CLIENT_ID_STORAGE_KEY);
+    gcalClientId = GCAL_CLIENT_ID_PLACEHOLDER;
+    gcalToken = null;
+    tokenClient = null;
+    refreshGoogleCalendarStatusUI();
+    showNotif('Google Client ID temizlendi', '⚠');
+    return;
+  }
+  localStorage.setItem(GCAL_CLIENT_ID_STORAGE_KEY, val);
+  gcalClientId = val;
+  gcalToken = null;
+  tokenClient = null;
+  if (typeof google !== 'undefined' && google.accounts) setupTokenClient();
+  refreshGoogleCalendarStatusUI();
+  showNotif('Google Client ID kaydedildi', '✓');
+}
+
+function connectGoogleCalendar() {
+  if (gcalClientId === GCAL_CLIENT_ID_PLACEHOLDER) {
+    showNotif('Önce Google Client ID gir', '⚠');
+    return;
+  }
+  requestGcalAuth();
+  refreshGoogleCalendarStatusUI();
+}
+
+function disconnectGoogleCalendar() {
+  gcalToken = null;
+  refreshGoogleCalendarStatusUI();
+  showNotif('Google Takvim bağlantısı kaldırıldı', 'ℹ');
+}
 
 function initGoogleAuth() {
   // Google Identity Services yüklü mü kontrol et
@@ -2181,29 +2294,33 @@ function initGoogleAuth() {
     s.src = 'https://accounts.google.com/gsi/client';
     s.onload = () => {
       gisLoaded = true;
-      if (GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID_HERE') setupTokenClient();
+      if (gcalClientId !== GCAL_CLIENT_ID_PLACEHOLDER) setupTokenClient();
+      refreshGoogleCalendarStatusUI();
     };
     document.head.appendChild(s);
     return;
   }
   gisLoaded = true;
-  if (GOOGLE_CLIENT_ID !== 'YOUR_GOOGLE_CLIENT_ID_HERE') setupTokenClient();
+  if (gcalClientId !== GCAL_CLIENT_ID_PLACEHOLDER) setupTokenClient();
+  refreshGoogleCalendarStatusUI();
 }
 
 function setupTokenClient() {
+  if (gcalClientId === GCAL_CLIENT_ID_PLACEHOLDER) return;
   tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GOOGLE_CLIENT_ID,
+    client_id: gcalClientId,
     scope: GCAL_SCOPE,
     callback: (resp) => {
       if (resp.error) { console.error('OAuth error:', resp.error); return; }
       gcalToken = resp.access_token;
+      refreshGoogleCalendarStatusUI();
       showNotif('Google Takvim bağlandı!','📅');
     }
   });
 }
 
 function requestGcalAuth() {
-  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
+  if (gcalClientId === GCAL_CLIENT_ID_PLACEHOLDER) {
     showNotif('OAuth kurulumu gerekli — README\'ye bak','⚠');
     return false;
   }
@@ -2214,9 +2331,9 @@ function requestGcalAuth() {
 
 async function createGcalEvent(summary, date, amount, urgent=false) {
   // Claude.ai üzerinden çalışıyorsa Anthropic MCP kullan
-  if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-    // Simulated — gerçek event daha önce MCP ile oluşturuldu
-    return { simulated: true, summary };
+  if (!gcalClientId || gcalClientId === GCAL_CLIENT_ID_PLACEHOLDER) {
+    // Simulated: Google OAuth kurulmadan gerçek takvim eventi oluşmaz
+    return { simulated: true, summary, date, amount };
   }
   if (!gcalToken) { requestGcalAuth(); return null; }
   const body = {
