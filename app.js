@@ -409,45 +409,22 @@ function renderBanksPage(){
   if(!bankWizard) bankWizard = createEmptyBankWizard();
   const host = document.getElementById('banks-root');
   if(!host) return;
-  const totalCards = banks.reduce((s,b)=>s+b.cards.length,0);
-  const totalLoans = banks.reduce((s,b)=>s+b.loans.length,0);
   host.innerHTML=`
-    <div class="g2">
-      <div class="card bank-top-card">
+    <div class="card bank-main-card">
+      <div class="bank-main-section">
         <div class="ct">Banka Form Sihirbazı</div>
         ${renderBankWizard()}
       </div>
-      <div class="card bank-top-card">
-        <div class="ct">Özet</div>
-        <div class="bank-summary-grid">
-          <div class="bank-summary-item">
-            <div class="bank-summary-label">🏦 Banka</div>
-            <div class="mv">${banks.length}</div>
-          </div>
-          <div class="bank-summary-item">
-            <div class="bank-summary-label">💼 Hesap</div>
-            <div class="mv">${totalBankAccounts()}</div>
-          </div>
-          <div class="bank-summary-item">
-            <div class="bank-summary-label">📄 Kredi</div>
-            <div class="mv">${totalLoans}</div>
-          </div>
-          <div class="bank-summary-item">
-            <div class="bank-summary-label">💳 Kart</div>
-            <div class="mv">${totalCards}</div>
+      <div class="bank-main-section">
+        <div class="u-flex-between">
+          <div class="ct">Banka Listesi</div>
+          <div class="bank-search-wrap">
+            <input id="bank-search" placeholder="Banka ara..." data-input-action="renderBankTree">
           </div>
         </div>
+        <div id="bank-tree" class="bank-tree"></div>
       </div>
     </div>
-    <div class="card bank-list-toolbar">
-      <div class="u-flex-between">
-        <div class="ct">Banka Listesi</div>
-        <div class="bank-search-wrap">
-          <input id="bank-search" placeholder="Banka ara..." data-input-action="renderBankTree">
-        </div>
-      </div>
-    </div>
-    <div id="bank-tree" class="bank-tree"></div>
   `;
   renderBankTree();
 }

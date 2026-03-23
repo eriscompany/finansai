@@ -206,6 +206,12 @@ input::placeholder { color: var(--text3); }
 /* Bank page polish */
 .bank-tree { margin-top: 12px; }
 .bank-import-card { margin-top: 12px; }
+.bank-main-card { padding: 14px; }
+.bank-main-section + .bank-main-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
 .bank-top-card { padding: 14px; }
 .bank-list-toolbar { margin-top: 12px; margin-bottom: 8px; }
 .bank-search-wrap { width: 280px; max-width: 100%; }
@@ -292,6 +298,7 @@ input::placeholder { color: var(--text3); }
   .main { padding: 14px; }
   .bank-search-wrap { width: 100%; margin-top: 8px; }
   .bank-summary-grid { grid-template-columns: 1fr; }
+  .bank-main-card { padding: 12px; }
   .bank-actions .btn { width: 100%; }
   .bank-inline-actions { flex-wrap: wrap; }
   .bank-inline-actions .btn { width: 100%; }
