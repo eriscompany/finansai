@@ -2235,10 +2235,12 @@ const GCAL_SCOPE = 'https://www.googleapis.com/auth/calendar.events';
 let gcalToken = null;
 let gisLoaded = false;
 let tokenClient = null;
+let gcalLastError = '';
 
 function refreshGoogleCalendarStatusUI() {
   const input = document.getElementById('gcal-client-id');
   const status = document.getElementById('gcal-status');
+  const debug = document.getElementById('gcal-debug');
   const connectBtn = document.getElementById('gcal-connect-btn');
   if (input) input.value = gcalClientId === GCAL_CLIENT_ID_PLACEHOLDER ? '' : gcalClientId;
   if (status) {
@@ -2246,6 +2248,7 @@ function refreshGoogleCalendarStatusUI() {
     else if (gcalToken) status.textContent = 'Durum: Bağlı';
     else status.textContent = 'Durum: Hazır (bağlanmadı)';
   }
+  if (debug) debug.textContent = `OAuth Hata: ${gcalLastError || '—'}`;
   if (connectBtn) connectBtn.textContent = gcalToken ? 'Yeniden Bağlan' : 'Google Bağlan';
 }
 
@@ -2258,6 +2261,7 @@ function saveGoogleClientIdFromSettings() {
     gcalClientId = GCAL_CLIENT_ID_PLACEHOLDER;
     gcalToken = null;
     tokenClient = null;
+    gcalLastError = '';
     refreshGoogleCalendarStatusUI();
     showNotif('Google Client ID temizlendi', '⚠');
     return;
@@ -2266,6 +2270,7 @@ function saveGoogleClientIdFromSettings() {
   gcalClientId = val;
   gcalToken = null;
   tokenClient = null;
+  gcalLastError = '';
   if (typeof google !== 'undefined' && google.accounts) setupTokenClient();
   refreshGoogleCalendarStatusUI();
   showNotif('Google Client ID kaydedildi', '✓');
@@ -2282,6 +2287,7 @@ function connectGoogleCalendar() {
 
 function disconnectGoogleCalendar() {
   gcalToken = null;
+  gcalLastError = '';
   refreshGoogleCalendarStatusUI();
   showNotif('Google Takvim bağlantısı kaldırıldı', 'ℹ');
 }
@@ -2311,7 +2317,14 @@ function setupTokenClient() {
     client_id: gcalClientId,
     scope: GCAL_SCOPE,
     callback: (resp) => {
-      if (resp.error) { console.error('OAuth error:', resp.error); return; }
+      if (resp.error) {
+        gcalLastError = resp.error;
+        refreshGoogleCalendarStatusUI();
+        console.error('OAuth error:', resp.error);
+        showNotif(`Google OAuth hatası: ${resp.error}`, '⚠');
+        return;
+      }
+      gcalLastError = '';
       gcalToken = resp.access_token;
       refreshGoogleCalendarStatusUI();
       showNotif('Google Takvim bağlandı!','📅');
@@ -2321,6 +2334,8 @@ function setupTokenClient() {
 
 function requestGcalAuth() {
   if (gcalClientId === GCAL_CLIENT_ID_PLACEHOLDER) {
+    gcalLastError = 'client_id_missing';
+    refreshGoogleCalendarStatusUI();
     showNotif('OAuth kurulumu gerekli — README\'ye bak','⚠');
     return false;
   }
