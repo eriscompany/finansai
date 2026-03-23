@@ -443,6 +443,7 @@ function renderBankTree(){
 }
 
 function renderBankDetail(b){
+  const detailTab = b.detailTab || 'accounts';
   return `<div class="bank-detail">
     <div class="bank-actions">
       <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'account'">+ Hesap</button>
@@ -450,18 +451,29 @@ function renderBankDetail(b){
       <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'card'">+ Kredi Kartı</button>
     </div>
     ${renderBankForm(b)}
+    <div class="tabs bank-subtabs">
+      <div class="tab ${detailTab==='accounts'?'active':''}" data-action="setBankDetailTab" data-args="${b.id},'accounts'">Hesaplar</div>
+      <div class="tab ${detailTab==='loans'?'active':''}" data-action="setBankDetailTab" data-args="${b.id},'loans'">Krediler</div>
+      <div class="tab ${detailTab==='cards'?'active':''}" data-action="setBankDetailTab" data-args="${b.id},'cards'">Kartlar</div>
+    </div>
     <div class="g3r bank-detail-grid">
       <div class="card bank-section-card">
         <div class="ct">Hesaplar</div>
-        ${b.accounts.map(a=>`<div class="tx-item"><div class="tx-b"><div class="tx-name">${a.type} · **** ${a.no}</div><div class="tx-meta">${a.currency||'TRY'}</div></div><div class="tx-amt ${a.balance>=0?'pos':'neg'}">${a.balance>=0?'+':''}${fmt(a.balance)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
+        ${detailTab==='accounts'
+          ? (b.accounts.map(a=>`<div class="tx-item"><div class="tx-b"><div class="tx-name">${a.type} · **** ${a.no}</div><div class="tx-meta">${a.currency||'TRY'}</div></div><div style="display:flex;align-items:center;gap:6px"><div class="tx-amt ${a.balance>=0?'pos':'neg'}">${a.balance>=0?'+':''}${fmt(a.balance)}</div><button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'account',${a.id}">Düzenle</button><button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'account',${a.id}">Sil</button></div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>')
+          : '<div class="u-muted-11">Bu sekme için içerik sağ panelde.</div>'}
       </div>
       <div class="card bank-section-card">
         <div class="ct">Krediler</div>
-        ${b.loans.map(l=>`<div class="bank-detail-item"><div class="bank-detail-title">${l.name}</div><div class="u-muted-11">Vade: ${l.termMonths} ay · Ödeme günü: ${l.paymentDay}</div><div class="u-muted-11">Faiz: %${l.annualRate} · Gecikme: %${l.lateRate||0}</div><div class="bank-detail-mono">Kalan: ${fmt(l.remaining)} · Aylık: ${fmt(l.monthlyInstallment||0)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
+        ${detailTab==='loans'
+          ? (b.loans.map(l=>`<div class="bank-detail-item"><div class="bank-detail-title">${l.name}</div><div class="u-muted-11">Vade: ${l.termMonths} ay · Ödeme günü: ${l.paymentDay}</div><div class="u-muted-11">Faiz: %${l.annualRate} · Gecikme: %${l.lateRate||0}</div><div class="bank-detail-mono">Kalan: ${fmt(l.remaining)} · Aylık: ${fmt(l.monthlyInstallment||0)}</div><div class="bank-inline-actions"><button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'loan',${l.id}">Düzenle</button><button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'loan',${l.id}">Sil</button></div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>')
+          : '<div class="u-muted-11">Bu sekme için içerik sağ panelde.</div>'}
       </div>
       <div class="card bank-section-card">
         <div class="ct">Kredi Kartları</div>
-        ${b.cards.map(c=>`<div class="bank-detail-item"><div class="bank-detail-title">${c.name} · **** ${c.last4}</div><div class="u-muted-11">Son ödeme günü: ${c.dueDay}${c.dueDate?` (${c.dueDate})`:''}</div><div class="u-muted-11">Aylık harcama: ${fmt(c.monthlySpend||0)} · Asgari: ${fmt(c.minPayment||0)}</div><div class="bank-detail-mono bank-detail-mono-red">Güncel borç: ${fmt(c.currentDebt||0)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
+        ${detailTab==='cards'
+          ? (b.cards.map(c=>`<div class="bank-detail-item"><div class="bank-detail-title">${c.name} · **** ${c.last4}</div><div class="u-muted-11">Son ödeme günü: ${c.dueDay}${c.dueDate?` (${c.dueDate})`:''}</div><div class="u-muted-11">Aylık harcama: ${fmt(c.monthlySpend||0)} · Asgari: ${fmt(c.minPayment||0)}</div><div class="bank-detail-mono bank-detail-mono-red">Güncel borç: ${fmt(c.currentDebt||0)}</div><div class="bank-inline-actions"><button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'card',${c.id}">Düzenle</button><button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'card',${c.id}">Sil</button></div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>')
+          : '<div class="u-muted-11">Bu sekme için içerik sağ panelde.</div>'}
       </div>
     </div>
   </div>`;
@@ -469,74 +481,78 @@ function renderBankDetail(b){
 
 function renderBankForm(bank){
   const mode = bank.formMode || '';
+  const edit = bank.editing || null;
   if(!mode) return '';
   if(mode==='account'){
+    const item = edit && edit.type==='account' ? bank.accounts.find(x=>x.id===edit.id) : null;
     return `<div class="card">
-      <div class="ct">Yeni Hesap</div>
+      <div class="ct">${item?'Hesap Düzenle':'Yeni Hesap'}</div>
       <div class="fg2">
-        <div class="fg"><label class="fl">Tür</label><select id="acc-type-${bank.id}"><option>Vadesiz</option><option>Vadeli</option><option>Tasarruf</option></select></div>
-        <div class="fg"><label class="fl">Son 4 Hane</label><input id="acc-no-${bank.id}" maxlength="4" placeholder="1234"></div>
+        <div class="fg"><label class="fl">Tür</label><select id="acc-type-${bank.id}"><option ${item&&item.type==='Vadesiz'?'selected':''}>Vadesiz</option><option ${item&&item.type==='Vadeli'?'selected':''}>Vadeli</option><option ${item&&item.type==='Tasarruf'?'selected':''}>Tasarruf</option></select></div>
+        <div class="fg"><label class="fl">Son 4 Hane</label><input id="acc-no-${bank.id}" maxlength="4" placeholder="1234" value="${item?item.no:''}"></div>
       </div>
       <div class="fg2">
-        <div class="fg"><label class="fl">Bakiye</label><input id="acc-bal-${bank.id}" type="number" placeholder="0"></div>
-        <div class="fg"><label class="fl">Para Birimi</label><select id="acc-cur-${bank.id}"><option>TRY</option><option>USD</option><option>EUR</option></select></div>
+        <div class="fg"><label class="fl">Bakiye</label><input id="acc-bal-${bank.id}" type="number" placeholder="0" value="${item?item.balance:''}"></div>
+        <div class="fg"><label class="fl">Para Birimi</label><select id="acc-cur-${bank.id}"><option ${item&&item.currency==='TRY'?'selected':''}>TRY</option><option ${item&&item.currency==='USD'?'selected':''}>USD</option><option ${item&&item.currency==='EUR'?'selected':''}>EUR</option></select></div>
       </div>
-      <button class="btn bacc2" data-action="addBankAccount" data-args="${bank.id}">Hesap Ekle</button>
+      <button class="btn bacc2" data-action="addBankAccount" data-args="${bank.id}">${item?'Kaydet':'Hesap Ekle'}</button>
     </div>`;
   }
   if(mode==='loan'){
+    const item = edit && edit.type==='loan' ? bank.loans.find(x=>x.id===edit.id) : null;
     return `<div class="card">
-      <div class="ct">Yeni Kredi</div>
+      <div class="ct">${item?'Kredi Düzenle':'Yeni Kredi'}</div>
       <div class="fg2">
-        <div class="fg"><label class="fl">Kredi Adı</label><input id="loan-name-${bank.id}" placeholder="Taşıt Kredisi"></div>
-        <div class="fg"><label class="fl">Anapara</label><input id="loan-principal-${bank.id}" type="number" placeholder="0"></div>
+        <div class="fg"><label class="fl">Kredi Adı</label><input id="loan-name-${bank.id}" placeholder="Taşıt Kredisi" value="${item?item.name:''}"></div>
+        <div class="fg"><label class="fl">Anapara</label><input id="loan-principal-${bank.id}" type="number" placeholder="0" value="${item?item.principal:''}"></div>
       </div>
       <div class="fg2">
-        <div class="fg"><label class="fl">Kalan Borç</label><input id="loan-rem-${bank.id}" type="number" placeholder="0"></div>
-        <div class="fg"><label class="fl">Faiz (% yıllık)</label><input id="loan-rate-${bank.id}" type="number" step="0.01" placeholder="0"></div>
+        <div class="fg"><label class="fl">Kalan Borç</label><input id="loan-rem-${bank.id}" type="number" placeholder="0" value="${item?item.remaining:''}"></div>
+        <div class="fg"><label class="fl">Faiz (% yıllık)</label><input id="loan-rate-${bank.id}" type="number" step="0.01" placeholder="0" value="${item?item.annualRate:''}"></div>
       </div>
       <div class="fg2">
-        <div class="fg"><label class="fl">Vade (ay)</label><input id="loan-term-${bank.id}" type="number" placeholder="12"></div>
-        <div class="fg"><label class="fl">Ödeme Günü</label><input id="loan-day-${bank.id}" type="number" min="1" max="31" placeholder="10"></div>
+        <div class="fg"><label class="fl">Vade (ay)</label><input id="loan-term-${bank.id}" type="number" placeholder="12" value="${item?item.termMonths:''}"></div>
+        <div class="fg"><label class="fl">Ödeme Günü</label><input id="loan-day-${bank.id}" type="number" min="1" max="31" placeholder="10" value="${item?item.paymentDay:''}"></div>
       </div>
       <div class="fg2">
-        <div class="fg"><label class="fl">Başlangıç</label><input id="loan-start-${bank.id}" type="date"></div>
-        <div class="fg"><label class="fl">Aylık Taksit</label><input id="loan-monthly-${bank.id}" type="number" placeholder="0"></div>
+        <div class="fg"><label class="fl">Başlangıç</label><input id="loan-start-${bank.id}" type="date" value="${item?item.startDate||'':''}"></div>
+        <div class="fg"><label class="fl">Aylık Taksit</label><input id="loan-monthly-${bank.id}" type="number" placeholder="0" value="${item?item.monthlyInstallment:''}"></div>
       </div>
       <div class="fg2">
-        <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="loan-late-${bank.id}" type="number" step="0.01" placeholder="0"></div>
+        <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="loan-late-${bank.id}" type="number" step="0.01" placeholder="0" value="${item?item.lateRate||0:''}"></div>
         <div class="fg"><label class="fl">Belge Yükle (Mock)</label><input id="loan-doc-${bank.id}" type="file"></div>
       </div>
       <div id="loan-doc-res-${bank.id}" class="u-muted-11 u-mb-8"></div>
       <button class="btn bghost bsm" data-action="mockExtractLoanDoc" data-args="${bank.id}">Belgeden Doldur (Mock)</button>
-      <button class="btn bacc2 u-mt-10" data-action="addBankLoan" data-args="${bank.id}">Kredi Ekle</button>
+      <button class="btn bacc2 u-mt-10" data-action="addBankLoan" data-args="${bank.id}">${item?'Kaydet':'Kredi Ekle'}</button>
     </div>`;
   }
+  const item = edit && edit.type==='card' ? bank.cards.find(x=>x.id===edit.id) : null;
   return `<div class="card">
-    <div class="ct">Yeni Kredi Kartı</div>
+    <div class="ct">${item?'Kredi Kartı Düzenle':'Yeni Kredi Kartı'}</div>
     <div class="fg2">
-      <div class="fg"><label class="fl">Kart Adı</label><input id="card-name-${bank.id}" placeholder="World Platinum"></div>
-      <div class="fg"><label class="fl">Son 4 Hane</label><input id="card-last4-${bank.id}" maxlength="4" placeholder="0000"></div>
+      <div class="fg"><label class="fl">Kart Adı</label><input id="card-name-${bank.id}" placeholder="World Platinum" value="${item?item.name:''}"></div>
+      <div class="fg"><label class="fl">Son 4 Hane</label><input id="card-last4-${bank.id}" maxlength="4" placeholder="0000" value="${item?item.last4:''}"></div>
     </div>
     <div class="fg2">
-      <div class="fg"><label class="fl">Güncel Borç</label><input id="card-debt-${bank.id}" type="number" placeholder="0"></div>
-      <div class="fg"><label class="fl">Aylık Harcama</label><input id="card-monthly-${bank.id}" type="number" placeholder="0"></div>
+      <div class="fg"><label class="fl">Güncel Borç</label><input id="card-debt-${bank.id}" type="number" placeholder="0" value="${item?item.currentDebt:''}"></div>
+      <div class="fg"><label class="fl">Aylık Harcama</label><input id="card-monthly-${bank.id}" type="number" placeholder="0" value="${item?item.monthlySpend:''}"></div>
     </div>
     <div class="fg2">
-      <div class="fg"><label class="fl">Asgari Ödeme</label><input id="card-min-${bank.id}" type="number" placeholder="0"></div>
-      <div class="fg"><label class="fl">Ödeme Günü</label><input id="card-day-${bank.id}" type="number" min="1" max="31" placeholder="10"></div>
+      <div class="fg"><label class="fl">Asgari Ödeme</label><input id="card-min-${bank.id}" type="number" placeholder="0" value="${item?item.minPayment:''}"></div>
+      <div class="fg"><label class="fl">Ödeme Günü</label><input id="card-day-${bank.id}" type="number" min="1" max="31" placeholder="10" value="${item?item.dueDay:''}"></div>
     </div>
     <div class="fg2">
-      <div class="fg"><label class="fl">Son Ödeme Tarihi</label><input id="card-due-${bank.id}" type="date"></div>
-      <div class="fg"><label class="fl">Yıllık Faiz (%)</label><input id="card-rate-${bank.id}" type="number" step="0.01" placeholder="0"></div>
+      <div class="fg"><label class="fl">Son Ödeme Tarihi</label><input id="card-due-${bank.id}" type="date" value="${item?item.dueDate||'':''}"></div>
+      <div class="fg"><label class="fl">Yıllık Faiz (%)</label><input id="card-rate-${bank.id}" type="number" step="0.01" placeholder="0" value="${item?item.annualRate:''}"></div>
     </div>
     <div class="fg2">
-      <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="card-late-${bank.id}" type="number" step="0.01" placeholder="0"></div>
+      <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="card-late-${bank.id}" type="number" step="0.01" placeholder="0" value="${item?item.lateRate:''}"></div>
       <div class="fg"><label class="fl">Belge Yükle (Mock)</label><input id="card-doc-${bank.id}" type="file"></div>
     </div>
     <div id="card-doc-res-${bank.id}" class="u-muted-11 u-mb-8"></div>
     <button class="btn bghost bsm" data-action="mockExtractCardDoc" data-args="${bank.id}">Belgeden Doldur (Mock)</button>
-    <button class="btn bacc2 u-mt-10" data-action="addBankCard" data-args="${bank.id}">Kredi Kartı Ekle</button>
+    <button class="btn bacc2 u-mt-10" data-action="addBankCard" data-args="${bank.id}">${item?'Kaydet':'Kredi Kartı Ekle'}</button>
   </div>`;
 }
 
@@ -558,8 +574,35 @@ function toggleBankExpand(bankId){
 function setBankForm(bankId, mode){
   const bank=banks.find(b=>b.id===Number(bankId)); if(!bank) return;
   bank.formMode=mode;
+  bank.editing=null;
   bank.expanded=true;
   renderBankTree();
+}
+
+function setBankDetailTab(bankId, tab){
+  const bank=banks.find(b=>b.id===Number(bankId)); if(!bank) return;
+  bank.detailTab=tab;
+  bank.expanded=true;
+  renderBankTree();
+}
+
+function startEditBankItem(bankId, type, itemId){
+  const bank=banks.find(b=>b.id===Number(bankId)); if(!bank) return;
+  bank.formMode=type;
+  bank.detailTab=type==='account'?'accounts':(type==='loan'?'loans':'cards');
+  bank.editing={type,id:Number(itemId)};
+  bank.expanded=true;
+  renderBankTree();
+}
+
+function deleteBankItem(bankId, type, itemId){
+  const bank=banks.find(b=>b.id===Number(bankId)); if(!bank) return;
+  const id=Number(itemId);
+  if(type==='account') bank.accounts=bank.accounts.filter(x=>x.id!==id);
+  if(type==='loan') bank.loans=bank.loans.filter(x=>x.id!==id);
+  if(type==='card') bank.cards=bank.cards.filter(x=>x.id!==id);
+  renderBankTree();
+  showNotif('Kayıt silindi','🗑');
 }
 
 function addBankAccount(bankId){
@@ -568,10 +611,16 @@ function addBankAccount(bankId){
   const no=(document.getElementById(`acc-no-${b.id}`)?.value||'0000').slice(-4);
   const balance=parseFloat(document.getElementById(`acc-bal-${b.id}`)?.value)||0;
   const currency=document.getElementById(`acc-cur-${b.id}`)?.value||'TRY';
-  b.accounts.push({id:Date.now(),type,no,balance,currency,iban:''});
+  if(b.editing && b.editing.type==='account'){
+    const item=b.accounts.find(x=>x.id===b.editing.id);
+    if(item){ item.type=type; item.no=no; item.balance=balance; item.currency=currency; }
+  }else{
+    b.accounts.push({id:Date.now(),type,no,balance,currency,iban:''});
+  }
   b.formMode='';
+  b.editing=null;
   renderBankTree();
-  showNotif('Hesap eklendi','＋');
+  showNotif('Hesap kaydedildi','＋');
 }
 
 function addBankLoan(bankId){
@@ -588,10 +637,16 @@ function addBankLoan(bankId){
     monthlyInstallment:parseFloat(document.getElementById(`loan-monthly-${b.id}`)?.value)||0,
     lateRate:parseFloat(document.getElementById(`loan-late-${b.id}`)?.value)||0
   };
-  b.loans.push(loan);
+  if(b.editing && b.editing.type==='loan'){
+    const idx=b.loans.findIndex(x=>x.id===b.editing.id);
+    if(idx>-1) b.loans[idx]={...b.loans[idx],...loan,id:b.editing.id};
+  }else{
+    b.loans.push(loan);
+  }
   b.formMode='';
+  b.editing=null;
   renderBankTree();
-  showNotif('Kredi eklendi','📄');
+  showNotif('Kredi kaydedildi','📄');
 }
 
 function addBankCard(bankId){
@@ -608,10 +663,16 @@ function addBankCard(bankId){
     annualRate:parseFloat(document.getElementById(`card-rate-${b.id}`)?.value)||0,
     lateRate:parseFloat(document.getElementById(`card-late-${b.id}`)?.value)||0
   };
-  b.cards.push(card);
+  if(b.editing && b.editing.type==='card'){
+    const idx=b.cards.findIndex(x=>x.id===b.editing.id);
+    if(idx>-1) b.cards[idx]={...b.cards[idx],...card,id:b.editing.id};
+  }else{
+    b.cards.push(card);
+  }
   b.formMode='';
+  b.editing=null;
   renderBankTree();
-  showNotif('Kredi kartı eklendi','💳');
+  showNotif('Kredi kartı kaydedildi','💳');
 }
 
 function mockExtractLoanDoc(bankId){
