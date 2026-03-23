@@ -964,6 +964,47 @@ function renderBankTree(){
 
 function renderBankDetail(b){
   const detailTab = b.detailTab || 'accounts';
+  const accountSection = b.accounts.length
+    ? `<div class="card bank-section-card">
+        <div class="ct">Hesaplar</div>
+        ${b.accounts.map(a=>`<div class="tx-item"><div class="tx-b"><div class="tx-name">${a.type} · **** ${a.no}</div><div class="tx-meta">${a.currency||'TRY'}</div></div><div style="display:flex;align-items:center;gap:6px"><div class="tx-amt ${a.balance>=0?'pos':'neg'}">${a.balance>=0?'+':''}${fmt(a.balance)}</div><button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'account',${a.id}">Düzenle</button><button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'account',${a.id}">Sil</button></div></div>`).join('')}
+      </div>`
+    : '';
+  const loanSection = b.loans.length
+    ? `<div class="card bank-section-card">
+        <div class="ct">Krediler</div>
+        ${b.loans.map(l=>{
+            const totalInst = Math.max(0, Number(l.termMonths||0));
+            const paidInst = Math.min(totalInst, Math.max(0, Number(l.paidInstallments||0)));
+            const remInst = Math.max(0, totalInst - paidInst);
+            return `<div class="bank-detail-item">
+              <div class="bank-detail-title">${l.name}</div>
+              <div class="u-muted-11">Vade: ${l.termMonths} ay · Ödeme günü: ${l.paymentDay}</div>
+              <div class="u-muted-11">Faiz: %${l.annualRate} · Gecikme: %${l.lateRate||0}</div>
+              <div class="u-muted-11">Taksit Durumu: ${paidInst}/${totalInst} ödendi · Kalan taksit: ${remInst}</div>
+              <div class="bank-detail-mono">Kalan: ${fmt(l.remaining)} · Aylık: ${fmt(l.monthlyInstallment||0)}</div>
+              <div class="bank-inline-actions">
+                <button class="btn bghost bsm" data-action="syncLoanReminder" data-args="${b.id},${l.id}">Takvime Ekle (2 gün önce)</button>
+                <button class="btn bacc2 bsm" data-action="markLoanInstallmentPaid" data-args="${b.id},${l.id}">Ödendi (OK)</button>
+                <button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'loan',${l.id}">Düzenle</button>
+                <button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'loan',${l.id}">Sil</button>
+              </div>
+            </div>`;
+          }).join('')}
+      </div>`
+    : '';
+  const cardSection = b.cards.length
+    ? `<div class="card bank-section-card">
+        <div class="ct">Kredi Kartları</div>
+        ${b.cards.map(c=>`<div class="bank-detail-item"><div class="bank-detail-title">${c.name} · **** ${c.last4}</div><div class="u-muted-11">Son ödeme günü: ${c.dueDay}${c.dueDate?` (${c.dueDate})`:''}</div><div class="u-muted-11">Aylık harcama: ${fmt(c.monthlySpend||0)} · Asgari: ${fmt(c.minPayment||0)}</div><div class="bank-detail-mono bank-detail-mono-red">Güncel borç: ${fmt(c.currentDebt||0)}</div><div class="bank-inline-actions"><button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'card',${c.id}">Düzenle</button><button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'card',${c.id}">Sil</button></div></div>`).join('')}
+      </div>`
+    : '';
+
+  const visibleSections = [accountSection, loanSection, cardSection].filter(Boolean);
+  const activeSection = detailTab === 'accounts'
+    ? accountSection
+    : (detailTab === 'loans' ? loanSection : cardSection);
+
   return `<div class="bank-detail">
     ${renderBankForm(b)}
     <div class="tabs bank-subtabs">
@@ -971,26 +1012,8 @@ function renderBankDetail(b){
       <div class="tab ${detailTab==='loans'?'active':''}" data-action="setBankDetailTab" data-args="${b.id},'loans'">Krediler</div>
       <div class="tab ${detailTab==='cards'?'active':''}" data-action="setBankDetailTab" data-args="${b.id},'cards'">Kartlar</div>
     </div>
-    <div class="g3r bank-detail-grid">
-      <div class="card bank-section-card">
-        <div class="ct">Hesaplar</div>
-        ${detailTab==='accounts'
-          ? (b.accounts.map(a=>`<div class="tx-item"><div class="tx-b"><div class="tx-name">${a.type} · **** ${a.no}</div><div class="tx-meta">${a.currency||'TRY'}</div></div><div style="display:flex;align-items:center;gap:6px"><div class="tx-amt ${a.balance>=0?'pos':'neg'}">${a.balance>=0?'+':''}${fmt(a.balance)}</div><button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'account',${a.id}">Düzenle</button><button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'account',${a.id}">Sil</button></div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>')
-          : '<div class="u-muted-11">Bu sekme için içerik sağ panelde.</div>'}
-      </div>
-      <div class="card bank-section-card">
-        <div class="ct">Krediler</div>
-        ${detailTab==='loans'
-          ? (b.loans.map(l=>`<div class="bank-detail-item"><div class="bank-detail-title">${l.name}</div><div class="u-muted-11">Vade: ${l.termMonths} ay · Ödeme günü: ${l.paymentDay}</div><div class="u-muted-11">Faiz: %${l.annualRate} · Gecikme: %${l.lateRate||0}</div><div class="bank-detail-mono">Kalan: ${fmt(l.remaining)} · Aylık: ${fmt(l.monthlyInstallment||0)}</div><div class="bank-inline-actions"><button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'loan',${l.id}">Düzenle</button><button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'loan',${l.id}">Sil</button></div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>')
-          : '<div class="u-muted-11">Bu sekme için içerik sağ panelde.</div>'}
-      </div>
-      <div class="card bank-section-card">
-        <div class="ct">Kredi Kartları</div>
-        ${detailTab==='cards'
-          ? (b.cards.map(c=>`<div class="bank-detail-item"><div class="bank-detail-title">${c.name} · **** ${c.last4}</div><div class="u-muted-11">Son ödeme günü: ${c.dueDay}${c.dueDate?` (${c.dueDate})`:''}</div><div class="u-muted-11">Aylık harcama: ${fmt(c.monthlySpend||0)} · Asgari: ${fmt(c.minPayment||0)}</div><div class="bank-detail-mono bank-detail-mono-red">Güncel borç: ${fmt(c.currentDebt||0)}</div><div class="bank-inline-actions"><button class="btn bghost bsm" data-action="startEditBankItem" data-args="${b.id},'card',${c.id}">Düzenle</button><button class="btn bdanger2 bsm" data-action="deleteBankItem" data-args="${b.id},'card',${c.id}">Sil</button></div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>')
-          : '<div class="u-muted-11">Bu sekme için içerik sağ panelde.</div>'}
-      </div>
-    </div>
+    <div class="g3r bank-detail-grid">${activeSection || '<div class="u-muted-11">Bu sekmede gösterilecek kayıt yok.</div>'}</div>
+    ${visibleSections.length > 1 ? `<div class="g3r bank-detail-grid u-mt-10">${visibleSections.filter(s=>s!==activeSection).join('')}</div>` : ''}
   </div>`;
 }
 
@@ -1321,11 +1344,12 @@ function addBankLoan(bankId){
     paymentDay:parseInt(document.getElementById(`loan-day-${b.id}`)?.value||'0',10)||1,
     startDate:document.getElementById(`loan-start-${b.id}`)?.value||'',
     monthlyInstallment:parseFloat(document.getElementById(`loan-monthly-${b.id}`)?.value)||0,
-    lateRate:parseFloat(document.getElementById(`loan-late-${b.id}`)?.value)||0
+    lateRate:parseFloat(document.getElementById(`loan-late-${b.id}`)?.value)||0,
+    paidInstallments:0
   };
   if(b.editing && b.editing.type==='loan'){
     const idx=b.loans.findIndex(x=>x.id===b.editing.id);
-    if(idx>-1) b.loans[idx]={...b.loans[idx],...loan,id:b.editing.id};
+    if(idx>-1) b.loans[idx]={...b.loans[idx],...loan,id:b.editing.id,paidInstallments:b.loans[idx].paidInstallments||0};
   }else{
     b.loans.push(loan);
   }
@@ -1389,6 +1413,65 @@ function mockExtractCardDoc(bankId){
   document.getElementById(`card-late-${b.id}`).value='62';
   const box=document.getElementById(`card-doc-res-${b.id}`);
   if(box) box.textContent=`✓ ${name} üzerinden örnek kart alanları dolduruldu (mock).`;
+}
+
+function getNextLoanDueDate(loan){
+  const now = new Date();
+  const paymentDay = Math.min(31, Math.max(1, Number(loan.paymentDay||1)));
+  const mkDate = (y,m,d)=>{
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    return new Date(y, m, Math.min(d, lastDay));
+  };
+  let due = mkDate(now.getFullYear(), now.getMonth(), paymentDay);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if(due < today) due = mkDate(now.getFullYear(), now.getMonth()+1, paymentDay);
+  return due;
+}
+
+async function syncLoanReminder(bankId, loanId){
+  const b = banks.find(x=>x.id===Number(bankId)); if(!b) return;
+  const l = b.loans.find(x=>x.id===Number(loanId)); if(!l) return;
+  const due = getNextLoanDueDate(l);
+  const remindAt = new Date(due);
+  remindAt.setDate(remindAt.getDate()-2);
+  const dueIso = due.toISOString().split('T')[0];
+  const remindIso = remindAt.toISOString().split('T')[0];
+  const amount = Number(l.monthlyInstallment||0) > 0
+    ? Number(l.monthlyInstallment||0)
+    : Math.max(0, Number(l.remaining||0));
+  const event = await createGcalEvent(
+    `${b.name} · ${l.name} kredi hatırlatma (son ödeme: ${dueIso})`,
+    remindIso,
+    Math.round(amount),
+    false
+  );
+  if(!event){
+    showNotif('Takvim bağlantısı gerekli','⚠');
+    return;
+  }
+  l.lastReminderAt = Date.now();
+  renderBankTree();
+  showNotif('Takvim hatırlatması eklendi','📅');
+}
+
+function markLoanInstallmentPaid(bankId, loanId){
+  const b = banks.find(x=>x.id===Number(bankId)); if(!b) return;
+  const l = b.loans.find(x=>x.id===Number(loanId)); if(!l) return;
+  const totalInst = Math.max(0, Number(l.termMonths||0));
+  const paidInst = Math.max(0, Number(l.paidInstallments||0));
+  if(totalInst>0 && paidInst>=totalInst){
+    showNotif('Bu kredi tamamen ödenmiş görünüyor','✅');
+    return;
+  }
+  const remInst = Math.max(1, totalInst - paidInst);
+  const installment = Number(l.monthlyInstallment||0) > 0
+    ? Number(l.monthlyInstallment||0)
+    : (remInst>0 ? Number(l.remaining||0) / remInst : Number(l.remaining||0));
+  l.remaining = Math.max(0, Number(l.remaining||0) - installment);
+  l.paidInstallments = paidInst + 1;
+  l.lastPaidAt = Date.now();
+  renderBankTree();
+  showNotif('Taksit ödendi olarak işaretlendi','✅');
 }
 
 // ═══ INVESTMENTS ═══
