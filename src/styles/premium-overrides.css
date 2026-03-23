@@ -1,0 +1,33 @@
+body {
+  background: radial-gradient(circle at 15% -10%, rgba(0, 204, 106, 0.15), transparent 42%),
+    radial-gradient(circle at 90% 0%, rgba(0, 133, 255, 0.16), transparent 36%);
+}
+
+.sidebar,
+.card,
+#auth-login-card {
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--ds-border);
+}
+
+.sidebar {
+  box-shadow: var(--ds-elev-2);
+}
+
+.topbar {
+  margin-bottom: var(--ds-space-4);
+}
+
+.card .ct {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.snav .ni {
+  border-radius: var(--ds-radius-md);
+  margin: 2px 6px;
+}
+
+.snav .ni.active {
+  box-shadow: inset 0 0 0 1px rgba(0, 204, 106, 0.25), 0 8px 20px rgba(0, 204, 106, 0.14);
+}

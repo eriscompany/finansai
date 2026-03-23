@@ -1,0 +1,24 @@
+.btn,
+button {
+  transition: transform 0.16s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.btn:hover,
+button:hover {
+  transform: translateY(-1px);
+}
+
+.card {
+  border-radius: var(--ds-radius-lg);
+  box-shadow: var(--ds-elev-1);
+}
+
+input,
+select,
+textarea {
+  border-radius: var(--ds-radius-sm);
+}
+
+.topbar h1 {
+  letter-spacing: 0.01em;
+}
