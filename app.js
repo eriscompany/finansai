@@ -409,7 +409,7 @@ function renderBanksPage(){
         </div>
       </div>
     </div>
-    <div id="bank-tree" style="margin-top:12px"></div>
+    <div id="bank-tree" class="bank-tree"></div>
   `;
   renderBankTree();
 }
@@ -421,21 +421,21 @@ function renderBankTree(){
     const accountTotal = b.accounts.reduce((s,a)=>s+a.balance,0);
     const loanTotal = b.loans.reduce((s,l)=>s+l.remaining,0);
     const cardTotal = b.cards.reduce((s,c)=>s+c.currentDebt,0);
-    return `<div class="card" style="margin-bottom:10px">
+    return `<div class="card bank-card">
       <div class="u-flex-between">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="font-size:20px">${b.icon||'🏦'}</div>
+        <div class="bank-head">
+          <div class="bank-head-icon">${b.icon||'🏦'}</div>
           <div>
-            <div style="font-size:15px;font-weight:600">${b.name}</div>
+            <div class="bank-name">${b.name}</div>
             <div class="u-muted-11">Hesap ${b.accounts.length} · Kredi ${b.loans.length} · Kart ${b.cards.length}</div>
           </div>
         </div>
         <button class="btn bghost bsm" data-action="toggleBankExpand" data-args="${b.id}">${b.expanded?'Detayı Gizle':'Detayları Gör'}</button>
       </div>
-      <div class="fg3" style="margin-top:10px">
-        <div><div class="fl">Toplam Hesap</div><div style="font-family:var(--mono);color:${accountTotal>=0?'var(--teal)':'var(--red)'}">${fmt(accountTotal)}</div></div>
-        <div><div class="fl">Kredi Borcu</div><div style="font-family:var(--mono);color:var(--orange)">${fmt(loanTotal)}</div></div>
-        <div><div class="fl">Kart Borcu</div><div style="font-family:var(--mono);color:var(--red)">${fmt(cardTotal)}</div></div>
+      <div class="fg3 bank-metrics">
+        <div class="bank-metric"><div class="fl">Toplam Hesap</div><div class="bank-metric-value ${accountTotal>=0?'pos':'neg'}">${fmt(accountTotal)}</div></div>
+        <div class="bank-metric"><div class="fl">Kredi Borcu</div><div class="bank-metric-value bank-metric-loan">${fmt(loanTotal)}</div></div>
+        <div class="bank-metric"><div class="fl">Kart Borcu</div><div class="bank-metric-value bank-metric-card">${fmt(cardTotal)}</div></div>
       </div>
       ${b.expanded?renderBankDetail(b):''}
     </div>`;
@@ -443,25 +443,25 @@ function renderBankTree(){
 }
 
 function renderBankDetail(b){
-  return `<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+  return `<div class="bank-detail">
+    <div class="bank-actions">
       <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'account'">+ Hesap</button>
       <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'loan'">+ Kredi</button>
       <button class="btn bghost bsm" data-action="setBankForm" data-args="${b.id},'card'">+ Kredi Kartı</button>
     </div>
     ${renderBankForm(b)}
-    <div class="g3r" style="margin-top:10px">
-      <div class="card">
+    <div class="g3r bank-detail-grid">
+      <div class="card bank-section-card">
         <div class="ct">Hesaplar</div>
         ${b.accounts.map(a=>`<div class="tx-item"><div class="tx-b"><div class="tx-name">${a.type} · **** ${a.no}</div><div class="tx-meta">${a.currency||'TRY'}</div></div><div class="tx-amt ${a.balance>=0?'pos':'neg'}">${a.balance>=0?'+':''}${fmt(a.balance)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
       </div>
-      <div class="card">
+      <div class="card bank-section-card">
         <div class="ct">Krediler</div>
-        ${b.loans.map(l=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600">${l.name}</div><div class="u-muted-11">Vade: ${l.termMonths} ay · Ödeme günü: ${l.paymentDay}</div><div class="u-muted-11">Faiz: %${l.annualRate} · Gecikme: %${l.lateRate||0}</div><div style="font-family:var(--mono)">Kalan: ${fmt(l.remaining)} · Aylık: ${fmt(l.monthlyInstallment||0)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
+        ${b.loans.map(l=>`<div class="bank-detail-item"><div class="bank-detail-title">${l.name}</div><div class="u-muted-11">Vade: ${l.termMonths} ay · Ödeme günü: ${l.paymentDay}</div><div class="u-muted-11">Faiz: %${l.annualRate} · Gecikme: %${l.lateRate||0}</div><div class="bank-detail-mono">Kalan: ${fmt(l.remaining)} · Aylık: ${fmt(l.monthlyInstallment||0)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
       </div>
-      <div class="card">
+      <div class="card bank-section-card">
         <div class="ct">Kredi Kartları</div>
-        ${b.cards.map(c=>`<div style="padding:8px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600">${c.name} · **** ${c.last4}</div><div class="u-muted-11">Son ödeme günü: ${c.dueDay}${c.dueDate?` (${c.dueDate})`:''}</div><div class="u-muted-11">Aylık harcama: ${fmt(c.monthlySpend||0)} · Asgari: ${fmt(c.minPayment||0)}</div><div style="font-family:var(--mono);color:var(--red)">Güncel borç: ${fmt(c.currentDebt||0)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
+        ${b.cards.map(c=>`<div class="bank-detail-item"><div class="bank-detail-title">${c.name} · **** ${c.last4}</div><div class="u-muted-11">Son ödeme günü: ${c.dueDay}${c.dueDate?` (${c.dueDate})`:''}</div><div class="u-muted-11">Aylık harcama: ${fmt(c.monthlySpend||0)} · Asgari: ${fmt(c.minPayment||0)}</div><div class="bank-detail-mono bank-detail-mono-red">Güncel borç: ${fmt(c.currentDebt||0)}</div></div>`).join('')||'<div class="u-muted-11">Kayıt yok</div>'}
       </div>
     </div>
   </div>`;
