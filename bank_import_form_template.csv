@@ -1,0 +1,29 @@
+field,value,description
+bank_name,Örnek Banka,Banka adı
+bank_icon,🏦,Banka ikonu (opsiyonel)
+account_1_type,Vadesiz,Hesap türü
+account_1_last4,1234,Son 4 hane
+account_1_balance,25000,Bakiye
+account_1_currency,TRY,TRY/USD/EUR
+account_2_type,,(Opsiyonel) ikinci hesap türü
+account_2_last4,,(Opsiyonel) ikinci hesap son 4
+account_2_balance,,(Opsiyonel) ikinci hesap bakiye
+account_2_currency,,(Opsiyonel) ikinci hesap para birimi
+loan_1_name,İhtiyaç Kredisi,Kredi adı
+loan_1_principal,120000,Anapara
+loan_1_remaining,84500,Kalan borç
+loan_1_annual_rate,39.9,Yıllık faiz
+loan_1_term_months,24,Vade (ay)
+loan_1_payment_day,12,Ödeme günü
+loan_1_start_date,2026-01-10,Başlangıç tarihi (YYYY-MM-DD)
+loan_1_monthly,6200,Aylık taksit
+loan_1_late_rate,52,Gecikme faizi
+card_1_name,Platinum,Kart adı
+card_1_last4,4509,Kart son 4
+card_1_current_debt,18420,Güncel borç
+card_1_monthly_spend,7300,Aylık harcama
+card_1_min_payment,2760,Asgari ödeme
+card_1_due_day,10,Ödeme günü
+card_1_due_date,2026-04-10,Son ödeme tarihi (YYYY-MM-DD)
+card_1_annual_rate,45.5,Yıllık faiz
+card_1_late_rate,62,Gecikme faizi

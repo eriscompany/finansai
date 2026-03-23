@@ -363,6 +363,22 @@ function renderTxItem(t){
 
 // ═══ BANKS ═══
 const BANK_ICONS={'Garanti BBVA':'🟠','İş Bankası':'🔵','Akbank':'🔴','Yapı Kredi':'⚫','Ziraat':'🟢','Halkbank':'🟤','VakıfBank':'🟡'};
+let bankWizard = null;
+
+function createEmptyBankWizard(){
+  return {
+    open: false,
+    step: 1,
+    draft: {
+      name: '',
+      icon: '🏦',
+      logoDataUrl: '',
+      accounts: [],
+      loans: [],
+      cards: []
+    }
+  };
+}
 
 function initBanks(){ renderBanksPage(); }
 
@@ -390,19 +406,14 @@ function migrateLegacyBanks(raw){
 }
 
 function renderBanksPage(){
+  if(!bankWizard) bankWizard = createEmptyBankWizard();
   const host = document.getElementById('banks-root');
   if(!host) return;
   host.innerHTML=`
     <div class="g2">
       <div class="card">
-        <div class="ct">Banka Ekle</div>
-        <div class="fg"><label class="fl">Banka Adı</label><input id="bank-new-name" placeholder="Örn: QNB Finansbank"></div>
-        <div class="fg2">
-          <div class="fg"><label class="fl">İkon</label><input id="bank-new-icon" placeholder="🏦"></div>
-          <div class="fg"><label class="fl">Logo Dosyası</label><input id="bank-new-logo" type="file" accept="image/*"></div>
-        </div>
-        <div class="u-muted-11">Logo localStorage'a base64 olarak kaydedilir (kalıcı).</div>
-        <button class="btn bacc2" data-action="addBankRoot">Banka Oluştur</button>
+        <div class="ct">Banka Form Sihirbazı</div>
+        ${renderBankWizard()}
       </div>
       <div class="card">
         <div class="ct">Özet</div>
@@ -418,9 +429,9 @@ function renderBanksPage(){
       <div class="u-muted-12 u-mb-8">Excel şablonunu indir, satırları doldur, CSV veya Excel XML olarak içe aktar.</div>
       <div class="fg2">
         <div class="fg"><label class="fl">Dosya</label><input id="bank-import-file" type="file" accept=".csv,.txt,.xml,.xls,text/csv,text/plain,application/xml"></div>
-        <div class="fg"><label class="fl">Şablon</label><div class="u-flex u-gap-8"><button class="btn bghost u-full" data-action="downloadBankTemplate">CSV Şablon</button><button class="btn bghost u-full" data-action="downloadBankTemplateExcel">Excel Şablon</button></div></div>
+        <div class="fg"><label class="fl">Şablon</label><div class="u-flex u-gap-8"><button class="btn bghost u-full" data-action="downloadBankTemplate">CSV Tablo</button><button class="btn bghost u-full" data-action="downloadBankFormTemplate">Form CSV</button><button class="btn bghost u-full" data-action="downloadBankTemplateExcel">Excel Şablon</button></div></div>
       </div>
-      <div class="u-muted-11">product_type alanı: account | loan | card. Her satır tek ürün temsil eder.</div>
+      <div class="u-muted-11">Tablo CSV: satır bazlı. Form CSV: alan-değer bazlı (tek bankayı kolay doldurma).</div>
       <div class="u-flex u-gap-8">
         <button class="btn bacc2" data-action="importBanksCsv">CSV Yükle ve İşle</button>
         <button class="btn bghost" data-action="replaceBanksByCsv">CSV ile Değiştir (mevcutları sil)</button>
@@ -430,6 +441,132 @@ function renderBanksPage(){
     <div id="bank-tree" class="bank-tree"></div>
   `;
   renderBankTree();
+}
+
+function renderBankWizard(){
+  if(!bankWizard.open){
+    return `
+      <div class="u-muted-12 u-mb-8">Gerçek form akışı: Banka bilgisi → Hesaplar → Krediler → Kartlar → Onay.</div>
+      <div class="u-flex u-gap-8">
+        <button class="btn bacc2" data-action="openBankWizard">Formu Başlat</button>
+        <button class="btn bghost" data-action="addBankRoot">Hızlı Ekle</button>
+      </div>
+    `;
+  }
+  const d = bankWizard.draft;
+  const step = bankWizard.step;
+  const stepLabel = ['Banka','Hesaplar','Krediler','Kartlar','Onay'][step-1];
+  if(step===1){
+    return `
+      <div class="bank-wizard-head">Adım ${step}/5 · ${stepLabel}</div>
+      <div class="fg"><label class="fl">Banka Adı</label><input id="wiz-bank-name" placeholder="Örn: QNB Finansbank" value="${d.name||''}"></div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">İkon</label><input id="wiz-bank-icon" placeholder="🏦" value="${d.icon||'🏦'}"></div>
+        <div class="fg"><label class="fl">Logo Dosyası</label><input id="wiz-bank-logo" type="file" accept="image/*"></div>
+      </div>
+      <div class="u-muted-11">Logo localStorage'a base64 olarak kaydedilir (kalıcı).</div>
+      <div class="u-flex u-gap-8">
+        <button class="btn bacc2" data-action="bankWizardNext">Devam</button>
+        <button class="btn bghost" data-action="closeBankWizard">İptal</button>
+      </div>
+    `;
+  }
+  if(step===2){
+    return `
+      <div class="bank-wizard-head">Adım ${step}/5 · ${stepLabel}</div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Tür</label><select id="wiz-acc-type"><option>Vadesiz</option><option>Vadeli</option><option>Tasarruf</option></select></div>
+        <div class="fg"><label class="fl">Son 4 Hane</label><input id="wiz-acc-no" maxlength="4" placeholder="1234"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Bakiye</label><input id="wiz-acc-bal" type="number" placeholder="0"></div>
+        <div class="fg"><label class="fl">Para Birimi</label><select id="wiz-acc-cur"><option>TRY</option><option>USD</option><option>EUR</option></select></div>
+      </div>
+      <div class="u-flex u-gap-8 u-mb-8">
+        <button class="btn bghost" data-action="bankWizardAddAccount">+ Hesap Ekle</button>
+      </div>
+      <div class="bank-wizard-list">${d.accounts.map(a=>`<div class="bank-wizard-item">${a.type} · ****${a.no} · ${fmt(a.balance)} ${a.currency}<button class="btn bdanger2 bsm" data-action="bankWizardRemoveItem" data-args="'account',${a.id}">Sil</button></div>`).join('') || '<div class="u-muted-11">Henüz hesap eklenmedi.</div>'}</div>
+      <div class="u-flex u-gap-8 u-mt-10">
+        <button class="btn bghost" data-action="bankWizardPrev">Geri</button>
+        <button class="btn bacc2" data-action="bankWizardNext">Devam</button>
+      </div>
+    `;
+  }
+  if(step===3){
+    return `
+      <div class="bank-wizard-head">Adım ${step}/5 · ${stepLabel}</div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Kredi Adı</label><input id="wiz-loan-name" placeholder="İhtiyaç Kredisi"></div>
+        <div class="fg"><label class="fl">Anapara</label><input id="wiz-loan-principal" type="number" placeholder="0"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Kalan Borç</label><input id="wiz-loan-rem" type="number" placeholder="0"></div>
+        <div class="fg"><label class="fl">Faiz (% yıllık)</label><input id="wiz-loan-rate" type="number" step="0.01" placeholder="0"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Vade (ay)</label><input id="wiz-loan-term" type="number" placeholder="12"></div>
+        <div class="fg"><label class="fl">Ödeme Günü</label><input id="wiz-loan-day" type="number" min="1" max="31" placeholder="10"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Başlangıç</label><input id="wiz-loan-start" type="date"></div>
+        <div class="fg"><label class="fl">Aylık Taksit</label><input id="wiz-loan-monthly" type="number" placeholder="0"></div>
+      </div>
+      <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="wiz-loan-late" type="number" step="0.01" placeholder="0"></div>
+      <div class="u-flex u-gap-8 u-mb-8">
+        <button class="btn bghost" data-action="bankWizardAddLoan">+ Kredi Ekle</button>
+      </div>
+      <div class="bank-wizard-list">${d.loans.map(l=>`<div class="bank-wizard-item">${l.name} · Kalan ${fmt(l.remaining)} · %${l.annualRate}<button class="btn bdanger2 bsm" data-action="bankWizardRemoveItem" data-args="'loan',${l.id}">Sil</button></div>`).join('') || '<div class="u-muted-11">Henüz kredi eklenmedi.</div>'}</div>
+      <div class="u-flex u-gap-8 u-mt-10">
+        <button class="btn bghost" data-action="bankWizardPrev">Geri</button>
+        <button class="btn bacc2" data-action="bankWizardNext">Devam</button>
+      </div>
+    `;
+  }
+  if(step===4){
+    return `
+      <div class="bank-wizard-head">Adım ${step}/5 · ${stepLabel}</div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Kart Adı</label><input id="wiz-card-name" placeholder="World Platinum"></div>
+        <div class="fg"><label class="fl">Son 4 Hane</label><input id="wiz-card-last4" maxlength="4" placeholder="0000"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Güncel Borç</label><input id="wiz-card-debt" type="number" placeholder="0"></div>
+        <div class="fg"><label class="fl">Aylık Harcama</label><input id="wiz-card-monthly" type="number" placeholder="0"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Asgari Ödeme</label><input id="wiz-card-min" type="number" placeholder="0"></div>
+        <div class="fg"><label class="fl">Ödeme Günü</label><input id="wiz-card-day" type="number" min="1" max="31" placeholder="10"></div>
+      </div>
+      <div class="fg2">
+        <div class="fg"><label class="fl">Son Ödeme Tarihi</label><input id="wiz-card-due" type="date"></div>
+        <div class="fg"><label class="fl">Yıllık Faiz (%)</label><input id="wiz-card-rate" type="number" step="0.01" placeholder="0"></div>
+      </div>
+      <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="wiz-card-late" type="number" step="0.01" placeholder="0"></div>
+      <div class="u-flex u-gap-8 u-mb-8">
+        <button class="btn bghost" data-action="bankWizardAddCard">+ Kart Ekle</button>
+      </div>
+      <div class="bank-wizard-list">${d.cards.map(c=>`<div class="bank-wizard-item">${c.name} · ****${c.last4} · Borç ${fmt(c.currentDebt)}<button class="btn bdanger2 bsm" data-action="bankWizardRemoveItem" data-args="'card',${c.id}">Sil</button></div>`).join('') || '<div class="u-muted-11">Henüz kart eklenmedi.</div>'}</div>
+      <div class="u-flex u-gap-8 u-mt-10">
+        <button class="btn bghost" data-action="bankWizardPrev">Geri</button>
+        <button class="btn bacc2" data-action="bankWizardNext">Devam</button>
+      </div>
+    `;
+  }
+  return `
+    <div class="bank-wizard-head">Adım ${step}/5 · ${stepLabel}</div>
+    <div class="card bank-wizard-summary">
+      <div class="u-muted-11"><strong>Banka:</strong> ${d.name || '—'}</div>
+      <div class="u-muted-11"><strong>İkon:</strong> ${d.icon || '🏦'}</div>
+      <div class="u-muted-11"><strong>Hesap:</strong> ${d.accounts.length}</div>
+      <div class="u-muted-11"><strong>Kredi:</strong> ${d.loans.length}</div>
+      <div class="u-muted-11"><strong>Kart:</strong> ${d.cards.length}</div>
+    </div>
+    <div class="u-flex u-gap-8 u-mt-10">
+      <button class="btn bghost" data-action="bankWizardPrev">Geri</button>
+      <button class="btn bacc2" data-action="bankWizardSave">Bankayı Kaydet</button>
+      <button class="btn bghost" data-action="closeBankWizard">İptal</button>
+    </div>
+  `;
 }
 
 function parseFlexibleCsv(text){
@@ -477,6 +614,74 @@ function parseExcelXmlRows(xmlText){
     if(Object.values(obj).some(v=>String(v).trim()!=='')) out.push(obj);
   }
   return out;
+}
+
+function parseKeyValueFormRows(rows){
+  // Expected columns: field,value[,description]
+  if(!rows.length) return null;
+  const hasFieldValue = rows[0].field !== undefined && rows[0].value !== undefined;
+  if(!hasFieldValue) return null;
+  const kv = {};
+  rows.forEach(r=>{
+    const key = String(r.field||'').trim().toLowerCase();
+    if(!key) return;
+    kv[key] = String(r.value||'').trim();
+  });
+  if(!kv.bank_name) return null;
+  const bank = {
+    id: Date.now()+Math.floor(Math.random()*100000),
+    name: kv.bank_name,
+    icon: kv.bank_icon || BANK_ICONS[kv.bank_name] || '🏦',
+    logoDataUrl: '',
+    expanded: false,
+    accounts: [],
+    loans: [],
+    cards: []
+  };
+  for(let i=1;i<=20;i++){
+    const at = kv[`account_${i}_type`];
+    if(at){
+      bank.accounts.push({
+        id: Date.now()+Math.floor(Math.random()*100000)+i,
+        type: at,
+        no: (kv[`account_${i}_last4`]||'0000').slice(-4),
+        balance: toNum(kv[`account_${i}_balance`]),
+        iban: '',
+        currency: (kv[`account_${i}_currency`]||'TRY').toUpperCase()
+      });
+    }
+    const ln = kv[`loan_${i}_name`];
+    if(ln){
+      bank.loans.push({
+        id: Date.now()+Math.floor(Math.random()*100000)+i,
+        name: ln,
+        principal: toNum(kv[`loan_${i}_principal`]),
+        remaining: toNum(kv[`loan_${i}_remaining`]),
+        annualRate: toNum(kv[`loan_${i}_annual_rate`]),
+        termMonths: toInt(kv[`loan_${i}_term_months`]),
+        paymentDay: toInt(kv[`loan_${i}_payment_day`]) || 1,
+        startDate: kv[`loan_${i}_start_date`]||'',
+        monthlyInstallment: toNum(kv[`loan_${i}_monthly`]),
+        lateRate: toNum(kv[`loan_${i}_late_rate`])
+      });
+    }
+    const cn = kv[`card_${i}_name`];
+    if(cn){
+      bank.cards.push({
+        id: Date.now()+Math.floor(Math.random()*100000)+i,
+        name: cn,
+        last4: (kv[`card_${i}_last4`]||'0000').slice(-4),
+        currentDebt: toNum(kv[`card_${i}_current_debt`]),
+        monthlySpend: toNum(kv[`card_${i}_monthly_spend`]),
+        minPayment: toNum(kv[`card_${i}_min_payment`]),
+        dueDay: toInt(kv[`card_${i}_due_day`]) || 1,
+        dueDate: kv[`card_${i}_due_date`]||'',
+        annualRate: toNum(kv[`card_${i}_annual_rate`]),
+        lateRate: toNum(kv[`card_${i}_late_rate`])
+      });
+    }
+  }
+  return bank;
 }
 
 function getOrCreateBankByName(name, icon=''){
@@ -574,7 +779,21 @@ async function importBanksCsv(){
   const rows = (text.trim().startsWith('<?xml') || text.includes('<Workbook'))
     ? parseExcelXmlRows(text)
     : parseFlexibleCsv(text);
-  const added = importRowsToBanks(rows);
+  const formBank = parseKeyValueFormRows(rows);
+  let added = 0;
+  if(formBank){
+    const existing = banks.find(b=>b.name.toLowerCase()===formBank.name.toLowerCase());
+    if(existing){
+      existing.accounts.push(...formBank.accounts);
+      existing.loans.push(...formBank.loans);
+      existing.cards.push(...formBank.cards);
+    }else{
+      banks.push(formBank);
+    }
+    added = formBank.accounts.length + formBank.loans.length + formBank.cards.length;
+  }else{
+    added = importRowsToBanks(rows);
+  }
   renderBanksPage();
   showNotif(`${added} kayıt içe aktarıldı`,'📥');
   if(res) res.textContent = `✓ ${added} kayıt aktarıldı.`;
@@ -590,10 +809,60 @@ async function replaceBanksByCsv(){
     ? parseExcelXmlRows(text)
     : parseFlexibleCsv(text);
   banks.splice(0,banks.length);
-  const added = importRowsToBanks(rows);
+  const formBank = parseKeyValueFormRows(rows);
+  let added = 0;
+  if(formBank){
+    banks.push(formBank);
+    added = formBank.accounts.length + formBank.loans.length + formBank.cards.length;
+  }else{
+    added = importRowsToBanks(rows);
+  }
   renderBanksPage();
   showNotif(`Bankalar CSV ile yenilendi (${added})`,'📥');
   if(res) res.textContent = `✓ Mevcut bankalar silinip ${added} kayıt aktarıldı.`;
+}
+
+function downloadBankFormTemplate(){
+  const header = 'field,value,description';
+  const rows = [
+    'bank_name,Örnek Banka,Banka adı',
+    'bank_icon,🏦,Banka ikonu (opsiyonel)',
+    'account_1_type,Vadesiz,Hesap türü',
+    'account_1_last4,1234,Son 4 hane',
+    'account_1_balance,25000,Bakiye',
+    'account_1_currency,TRY,TRY/USD/EUR',
+    'account_2_type,,(Opsiyonel) ikinci hesap türü',
+    'account_2_last4,,(Opsiyonel) ikinci hesap son 4',
+    'account_2_balance,,(Opsiyonel) ikinci hesap bakiye',
+    'account_2_currency,,(Opsiyonel) ikinci hesap para birimi',
+    'loan_1_name,İhtiyaç Kredisi,Kredi adı',
+    'loan_1_principal,120000,Anapara',
+    'loan_1_remaining,84500,Kalan borç',
+    'loan_1_annual_rate,39.9,Yıllık faiz',
+    'loan_1_term_months,24,Vade (ay)',
+    'loan_1_payment_day,12,Ödeme günü',
+    'loan_1_start_date,2026-01-10,Başlangıç tarihi (YYYY-MM-DD)',
+    'loan_1_monthly,6200,Aylık taksit',
+    'loan_1_late_rate,52,Gecikme faizi',
+    'card_1_name,Platinum,Kart adı',
+    'card_1_last4,4509,Kart son 4',
+    'card_1_current_debt,18420,Güncel borç',
+    'card_1_monthly_spend,7300,Aylık harcama',
+    'card_1_min_payment,2760,Asgari ödeme',
+    'card_1_due_day,10,Ödeme günü',
+    'card_1_due_date,2026-04-10,Son ödeme tarihi (YYYY-MM-DD)',
+    'card_1_annual_rate,45.5,Yıllık faiz',
+    'card_1_late_rate,62,Gecikme faizi'
+  ];
+  const blob = new Blob([`${header}\n${rows.join('\n')}\n`], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'bank_import_form_template.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function downloadBankTemplateExcel(){
@@ -841,6 +1110,134 @@ async function addBankRoot(){
   banks.push({id:Date.now(),name,icon:icon||BANK_ICONS[name]||'🏦',logoDataUrl,expanded:true,accounts:[],loans:[],cards:[],formMode:''});
   renderBanksPage();
   showNotif(name+' eklendi','🏦');
+}
+
+function openBankWizard(){
+  bankWizard = createEmptyBankWizard();
+  bankWizard.open = true;
+  renderBanksPage();
+}
+
+function closeBankWizard(){
+  bankWizard = createEmptyBankWizard();
+  renderBanksPage();
+}
+
+async function bankWizardNext(){
+  if(!bankWizard?.open) return;
+  if(bankWizard.step===1){
+    const name = (document.getElementById('wiz-bank-name')?.value||'').trim();
+    const icon = (document.getElementById('wiz-bank-icon')?.value||'').trim() || '🏦';
+    if(!name){ showNotif('Banka adı gerekli','⚠'); return; }
+    bankWizard.draft.name = name;
+    bankWizard.draft.icon = icon;
+    const file = document.getElementById('wiz-bank-logo')?.files?.[0];
+    if(file){
+      if(file.size > 350 * 1024){
+        showNotif('Logo dosyası çok büyük (max 350KB)','⚠');
+        return;
+      }
+      try{
+        bankWizard.draft.logoDataUrl = await fileToDataUrl(file);
+      }catch{
+        showNotif('Logo okunamadı','⚠');
+        return;
+      }
+    }
+  }
+  bankWizard.step = Math.min(5, bankWizard.step + 1);
+  renderBanksPage();
+}
+
+function bankWizardPrev(){
+  if(!bankWizard?.open) return;
+  bankWizard.step = Math.max(1, bankWizard.step - 1);
+  renderBanksPage();
+}
+
+function bankWizardAddAccount(){
+  if(!bankWizard?.open) return;
+  const type = document.getElementById('wiz-acc-type')?.value || 'Vadesiz';
+  const no = (document.getElementById('wiz-acc-no')?.value || '0000').slice(-4);
+  const balance = parseFloat(document.getElementById('wiz-acc-bal')?.value) || 0;
+  const currency = document.getElementById('wiz-acc-cur')?.value || 'TRY';
+  bankWizard.draft.accounts.push({ id: Date.now()+Math.floor(Math.random()*10000), type, no, balance, currency, iban: '' });
+  renderBanksPage();
+}
+
+function bankWizardAddLoan(){
+  if(!bankWizard?.open) return;
+  const loan = {
+    id: Date.now()+Math.floor(Math.random()*10000),
+    name: (document.getElementById('wiz-loan-name')?.value || 'Kredi').trim(),
+    principal: parseFloat(document.getElementById('wiz-loan-principal')?.value) || 0,
+    remaining: parseFloat(document.getElementById('wiz-loan-rem')?.value) || 0,
+    annualRate: parseFloat(document.getElementById('wiz-loan-rate')?.value) || 0,
+    termMonths: parseInt(document.getElementById('wiz-loan-term')?.value || '0', 10) || 0,
+    paymentDay: parseInt(document.getElementById('wiz-loan-day')?.value || '1', 10) || 1,
+    startDate: document.getElementById('wiz-loan-start')?.value || '',
+    monthlyInstallment: parseFloat(document.getElementById('wiz-loan-monthly')?.value) || 0,
+    lateRate: parseFloat(document.getElementById('wiz-loan-late')?.value) || 0
+  };
+  bankWizard.draft.loans.push(loan);
+  renderBanksPage();
+}
+
+function bankWizardAddCard(){
+  if(!bankWizard?.open) return;
+  const card = {
+    id: Date.now()+Math.floor(Math.random()*10000),
+    name: (document.getElementById('wiz-card-name')?.value || 'Kredi Kartı').trim(),
+    last4: (document.getElementById('wiz-card-last4')?.value || '0000').slice(-4),
+    currentDebt: parseFloat(document.getElementById('wiz-card-debt')?.value) || 0,
+    monthlySpend: parseFloat(document.getElementById('wiz-card-monthly')?.value) || 0,
+    minPayment: parseFloat(document.getElementById('wiz-card-min')?.value) || 0,
+    dueDay: parseInt(document.getElementById('wiz-card-day')?.value || '1', 10) || 1,
+    dueDate: document.getElementById('wiz-card-due')?.value || '',
+    annualRate: parseFloat(document.getElementById('wiz-card-rate')?.value) || 0,
+    lateRate: parseFloat(document.getElementById('wiz-card-late')?.value) || 0
+  };
+  bankWizard.draft.cards.push(card);
+  renderBanksPage();
+}
+
+function bankWizardRemoveItem(type, itemId){
+  if(!bankWizard?.open) return;
+  const id = Number(itemId);
+  if(type==='account') bankWizard.draft.accounts = bankWizard.draft.accounts.filter(x=>x.id!==id);
+  if(type==='loan') bankWizard.draft.loans = bankWizard.draft.loans.filter(x=>x.id!==id);
+  if(type==='card') bankWizard.draft.cards = bankWizard.draft.cards.filter(x=>x.id!==id);
+  renderBanksPage();
+}
+
+function bankWizardSave(){
+  if(!bankWizard?.open) return;
+  const d = bankWizard.draft;
+  if(!d.name){ showNotif('Banka adı eksik','⚠'); return; }
+  const existing = banks.find(b=>b.name.toLowerCase()===d.name.toLowerCase());
+  if(existing){
+    existing.accounts.push(...d.accounts);
+    existing.loans.push(...d.loans);
+    existing.cards.push(...d.cards);
+    if(!existing.logoDataUrl && d.logoDataUrl) existing.logoDataUrl = d.logoDataUrl;
+    if(!existing.icon && d.icon) existing.icon = d.icon;
+    existing.expanded = true;
+    showNotif(`${d.name} güncellendi`,'🏦');
+  }else{
+    banks.push({
+      id: Date.now(),
+      name: d.name,
+      icon: d.icon || BANK_ICONS[d.name] || '🏦',
+      logoDataUrl: d.logoDataUrl || '',
+      expanded: true,
+      accounts: d.accounts,
+      loans: d.loans,
+      cards: d.cards,
+      formMode: ''
+    });
+    showNotif(`${d.name} eklendi`,'🏦');
+  }
+  closeBankWizard();
 }
 
 function toggleBankExpand(bankId){
