@@ -1177,6 +1177,27 @@ async function createGcalEvent(summary, date, amount, urgent=false) {
 // ═══════════════════════════════════════════════════════
 // LOCAL STORAGE — Veri Kalıcılığı
 // ═══════════════════════════════════════════════════════
+const STORAGE_SCHEMA_KEY = 'finansai_schema_version';
+const STORAGE_SCHEMA_VERSION = 2;
+
+function safeParseJSON(raw, fallback){
+  try { return JSON.parse(raw); } catch { return fallback; }
+}
+
+function runStorageMigrations(){
+  const current = parseInt(localStorage.getItem(STORAGE_SCHEMA_KEY)||'1',10);
+  if(current >= STORAGE_SCHEMA_VERSION) return;
+  // v1 -> v2: Bozuk monthly datayi temizle
+  const monthlyRaw = localStorage.getItem('finansai_monthly');
+  if(monthlyRaw){
+    const parsed = safeParseJSON(monthlyRaw, {});
+    if(!parsed || typeof parsed !== 'object'){
+      localStorage.removeItem('finansai_monthly');
+    }
+  }
+  localStorage.setItem(STORAGE_SCHEMA_KEY, String(STORAGE_SCHEMA_VERSION));
+}
+
 function saveData() {
   try {
     localStorage.setItem('finansai_bills', JSON.stringify(bills));
@@ -1193,14 +1214,15 @@ function saveData() {
 
 function loadData() {
   try {
-    const b = localStorage.getItem('finansai_bills'); if(b) bills.splice(0, bills.length, ...JSON.parse(b));
-    const i = localStorage.getItem('finansai_installments'); if(i) installments.splice(0, installments.length, ...JSON.parse(i));
-    const ba = localStorage.getItem('finansai_bankaccs'); if(ba) bankAccs.splice(0, bankAccs.length, ...JSON.parse(ba));
-    const inv = localStorage.getItem('finansai_investments'); if(inv) investments.splice(0, investments.length, ...JSON.parse(inv));
-    const cr = localStorage.getItem('finansai_crypto'); if(cr) cryptoPortfolio.splice(0, cryptoPortfolio.length, ...JSON.parse(cr));
-    const md = localStorage.getItem('finansai_monthly'); if(md) Object.assign(monthlyData, JSON.parse(md));
-    const wa = localStorage.getItem('finansai_watch'); if(wa) watchItems.splice(0, watchItems.length, ...JSON.parse(wa));
-    const tx = localStorage.getItem('finansai_transactions'); if(tx) allTx.splice(0, allTx.length, ...JSON.parse(tx));
+    runStorageMigrations();
+    const b = localStorage.getItem('finansai_bills'); if(b) bills.splice(0, bills.length, ...safeParseJSON(b, []));
+    const i = localStorage.getItem('finansai_installments'); if(i) installments.splice(0, installments.length, ...safeParseJSON(i, []));
+    const ba = localStorage.getItem('finansai_bankaccs'); if(ba) bankAccs.splice(0, bankAccs.length, ...safeParseJSON(ba, []));
+    const inv = localStorage.getItem('finansai_investments'); if(inv) investments.splice(0, investments.length, ...safeParseJSON(inv, []));
+    const cr = localStorage.getItem('finansai_crypto'); if(cr) cryptoPortfolio.splice(0, cryptoPortfolio.length, ...safeParseJSON(cr, []));
+    const md = localStorage.getItem('finansai_monthly'); if(md) Object.assign(monthlyData, safeParseJSON(md, {}));
+    const wa = localStorage.getItem('finansai_watch'); if(wa) watchItems.splice(0, watchItems.length, ...safeParseJSON(wa, []));
+    const tx = localStorage.getItem('finansai_transactions'); if(tx) allTx.splice(0, allTx.length, ...safeParseJSON(tx, []));
   } catch(e) { console.warn('localStorage load failed:', e); }
 }
 

@@ -108,7 +108,7 @@
         <label style="display:block;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:rgba(255,255,255,.4);margin-bottom:6px">Şifre</label>
         <div style="position:relative">
           <input id="setup-pass" type="password" placeholder="Min. 8 karakter, 1 büyük harf, 1 rakam" autocomplete="new-password" style="width:100%;padding-right:44px!important">
-          <button onclick="togglePwd('setup-pass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:14px">👁</button>
+          <button data-action="togglePwd" data-args="'setup-pass'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.3);cursor:pointer;font-size:14px">👁</button>
         </div>
       </div>
       <div style="margin-bottom:16px">
@@ -118,10 +118,9 @@
       <div id="setup-strength" style="margin-bottom:12px;font-size:12px;min-height:20px"></div>
       <div id="setup-err" style="color:#ff6060;font-size:12.5px;margin-bottom:10px;min-height:18px;text-align:center"></div>
 
-      <button onclick="doSetup()" id="setup-btn"
+      <button data-action="doSetup" id="setup-btn"
         style="width:100%;padding:14px;background:linear-gradient(135deg,#007a40,#00cc6a);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);letter-spacing:.02em;transition:all .2s;box-shadow:0 8px 24px rgba(0,204,106,.35)"
-        onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 32px rgba(0,204,106,.5)'"
-        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 24px rgba(0,204,106,.35)'">
+        >
         Hesabı Oluştur →
       </button>
     </div>
@@ -263,7 +262,7 @@
         <div style="position:relative">
           <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.4;pointer-events:none">👤</span>
           <input id="login-user" type="text" placeholder="Kullanıcı adınız" autocomplete="username" spellcheck="false"
-            onkeydown="if(event.key==='Enter')doLogin()"
+            data-enter-action="doLogin"
             style="padding-left:42px!important;width:100%">
         </div>
       </div>
@@ -272,9 +271,9 @@
         <div style="position:relative">
           <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px;opacity:.4;pointer-events:none">🔑</span>
           <input id="login-pass" type="password" placeholder="••••••••" autocomplete="current-password"
-            onkeydown="if(event.key==='Enter')doLogin()"
+            data-enter-action="doLogin"
             style="padding-left:42px!important;padding-right:44px!important;width:100%">
-          <button onclick="togglePwd('login-pass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:15px;padding:4px;transition:color .15s" onmouseover="this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.color='rgba(255,255,255,.35)'">👁</button>
+          <button data-action="togglePwd" data-args="'login-pass'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.35);cursor:pointer;font-size:15px;padding:4px;transition:color .15s">👁</button>
         </div>
       </div>
       
@@ -282,10 +281,9 @@
       <div id="login-err" style="color:#ff6060;font-size:12.5px;margin-bottom:14px;min-height:18px;text-align:center;font-weight:500"></div>
 
       <!-- Button -->
-      <button onclick="doLogin()" id="login-btn"
+      <button data-action="doLogin" id="login-btn"
         style="width:100%;padding:14px;background:linear-gradient(135deg,#007a40,#00cc6a);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);letter-spacing:.02em;transition:all .2s;box-shadow:0 8px 24px rgba(0,204,106,.4),0 2px 8px rgba(0,0,0,.3)"
-        onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 12px 32px rgba(0,204,106,.55),0 4px 12px rgba(0,0,0,.3)'"
-        onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 24px rgba(0,204,106,.4),0 2px 8px rgba(0,0,0,.3)'">
+        >
         Giriş Yap →
       </button>
 
@@ -303,28 +301,28 @@
 </div>
 
 <!-- SESSION TIMER (köşede göstergesi) -->
-<div id="session-timer" style="display:none;visibility:hidden;position:fixed;bottom:18px;left:18px;z-index:10000;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rs);padding:6px 11px;font-size:11px;color:var(--text3);font-family:var(--mono)">
+<div id="session-timer" class="session-timer">
   <span id="session-timer-txt"></span>
 </div>
 
 <!-- USER MGMT PANEL (admin için sidebar'da açılır) -->
-<div id="user-panel" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.6);backdrop-filter:blur(4px)">
-  <div style="position:absolute;right:0;top:0;bottom:0;width:360px;background:var(--bg2);border-left:1px solid var(--border2);padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between">
-      <h3 style="font-family:var(--serif);font-size:18px;font-weight:400;color:var(--text)">Kullanıcı Yönetimi</h3>
-      <button onclick="closeUserPanel()" style="background:var(--bg3);border:1px solid var(--border2);border-radius:var(--rs);padding:5px 10px;font-size:12px;color:var(--text2);cursor:pointer">✕ Kapat</button>
+<div id="user-panel" class="user-panel">
+  <div class="user-panel-sheet">
+    <div class="u-flex-between">
+      <h3 class="user-panel-title">Kullanıcı Yönetimi</h3>
+      <button data-action="closeUserPanel" class="user-panel-close-btn">✕ Kapat</button>
     </div>
-    <div id="user-list-panel" style="display:flex;flex-direction:column;gap:8px"></div>
-    <div style="border-top:1px solid var(--border);padding-top:14px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:10px">Yeni Kullanıcı Ekle</div>
-      <div style="margin-bottom:9px"><label style="display:block;font-size:10px;color:var(--text3);margin-bottom:4px">Kullanıcı Adı</label><input id="nu-user" type="text" placeholder="kullaniciadi" style="font-size:13px"></div>
-      <div style="margin-bottom:9px"><label style="display:block;font-size:10px;color:var(--text3);margin-bottom:4px">Şifre</label>
-        <div style="position:relative"><input id="nu-pass" type="password" placeholder="Min. 8k, 1 büyük, 1 rakam" style="font-size:13px">
-        <button onclick="togglePwd('nu-pass',this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px">👁</button></div></div>
-      <div style="margin-bottom:9px"><label style="display:block;font-size:10px;color:var(--text3);margin-bottom:4px">Rol</label>
-        <select id="nu-role" style="font-size:13px"><option value="user">Kullanıcı</option><option value="admin">Admin</option></select></div>
-      <div id="nu-err" style="color:var(--red);font-size:12px;margin-bottom:8px;min-height:16px"></div>
-      <button onclick="addUser()" style="width:100%;padding:9px;background:var(--accent);color:#1a2000;border:none;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Kullanıcı Ekle</button>
+    <div id="user-list-panel" class="user-list-panel"></div>
+    <div class="user-panel-section">
+      <div class="user-panel-section-title">Yeni Kullanıcı Ekle</div>
+      <div class="user-panel-field"><label class="user-panel-label">Kullanıcı Adı</label><input id="nu-user" type="text" placeholder="kullaniciadi" class="user-panel-input"></div>
+      <div class="user-panel-field"><label class="user-panel-label">Şifre</label>
+        <div class="user-panel-input-wrap"><input id="nu-pass" type="password" placeholder="Min. 8k, 1 büyük, 1 rakam" class="user-panel-input">
+        <button data-action="togglePwd" data-args="'nu-pass'" class="user-panel-eye-btn">👁</button></div></div>
+      <div class="user-panel-field"><label class="user-panel-label">Rol</label>
+        <select id="nu-role" class="user-panel-input"><option value="user">Kullanıcı</option><option value="admin">Admin</option></select></div>
+      <div id="nu-err" class="user-panel-err"></div>
+      <button data-action="addUser" class="user-panel-primary-btn">Kullanıcı Ekle</button>
     </div>
     <div style="border-top:1px solid var(--border);padding-top:14px">
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text3);margin-bottom:10px">Şifre Değiştir</div>
@@ -336,7 +334,7 @@
         <input id="cp-new2" type="password" placeholder="••••••••" style="font-size:13px"></div>
       <div id="cp-err" style="color:var(--red);font-size:12px;margin-bottom:8px;min-height:16px"></div>
       <div id="cp-ok" style="color:var(--teal);font-size:12px;margin-bottom:8px;min-height:16px"></div>
-      <button onclick="doChangePass()" style="width:100%;padding:9px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font)">Şifreyi Güncelle</button>
+      <button data-action="doChangePass" style="width:100%;padding:9px;background:var(--bg4);color:var(--text2);border:1px solid var(--border2);border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font)">Şifreyi Güncelle</button>
     </div>
   </div>
 </div>
@@ -377,7 +375,7 @@
 </svg></div>
   <div id="session-info" style="padding:8px 14px 4px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text3);display:flex;align-items:center;justify-content:space-between;gap:6px">
     <span id="session-username" style="display:flex;align-items:center;gap:5px"></span>
-    <button onclick="doLogout()" style="font-size:10px;color:var(--red);background:none;border:1px solid rgba(255,96,96,.2);border-radius:4px;padding:2px 7px;cursor:pointer">Çıkış</button>
+    <button data-action="doLogout" style="font-size:10px;color:var(--red);background:none;border:1px solid rgba(255,96,96,.2);border-radius:4px;padding:2px 7px;cursor:pointer">Çıkış</button>
   </div>
   <nav class="snav">
     <div class="snav-grp">Genel</div>
@@ -399,10 +397,10 @@
     <div class="ni" data-page="settings"><span class="ni-icon">⚙</span><span>Ayarlar</span></div>
   </nav>
   <div class="sfoot">
-    <button class="fb active" id="btn-tr" onclick="setLang('tr')">TR</button>
-    <button class="fb" id="btn-en" onclick="setLang('en')">EN</button>
-    <button class="tb" onclick="toggleTheme()">◑</button>
-    <button class="tb" id="user-menu-btn" onclick="openUserPanel()" title="Kullanıcı Yönetimi" style="font-size:12px">👤</button>
+    <button class="fb active" id="btn-tr" data-action="setLang" data-args="'tr'">TR</button>
+    <button class="fb" id="btn-en" data-action="setLang" data-args="'en'">EN</button>
+    <button class="tb" data-action="toggleTheme">◑</button>
+    <button class="tb" id="user-menu-btn" data-action="openUserPanel" title="Kullanıcı Yönetimi" style="font-size:12px">👤</button>
   </div>
 </aside>
 
@@ -421,23 +419,23 @@
   <div class="g3">
     <div class="card"><div class="ct">Son İşlemler</div><div id="dash-tx"></div></div>
     <div>
-      <div class="card" style="margin-bottom:13px"><div class="ct">Taksitler Özeti</div><div id="dash-inst"></div></div>
+      <div class="card u-mb-13"><div class="ct">Taksitler Özeti</div><div id="dash-inst"></div></div>
       <div class="card"><div class="ct">Bekleyen Faturalar</div><div id="dash-bills"></div></div>
     </div>
   </div>
   <div class="g2">
     <div class="card"><div class="ct">Kripto (Canlı)</div><div id="dash-crypto"></div></div>
-    <div class="card"><div class="ct">AI Anlık Analiz</div><div id="dash-ai-tip" style="font-size:13px;line-height:1.7;color:var(--text2)"><div class="dots"><span></span><span></span><span></span></div></div>
-      <button class="btn bghost bsm" style="margin-top:10px;width:100%" onclick="showPage('ai')">AI ile konuş →</button></div>
+    <div class="card"><div class="ct">AI Anlık Analiz</div><div id="dash-ai-tip" class="u-muted-12 dash-ai-tip"><div class="dots"><span></span><span></span><span></span></div></div>
+      <button class="btn bghost bsm u-mt-10 u-full" data-action="showPage" data-args="'ai'">AI ile konuş →</button></div>
   </div>
 </div>
 
 <!-- WATCHLIST -->
 <div class="page" id="page-watchlist">
   <div class="topbar"><div><h1>Favoriler</h1><p>Altın, döviz, fon takibi</p></div></div>
-  <div class="card" style="margin-bottom:13px">
+  <div class="card u-mb-13">
     <div class="ct">Takip Listesi</div>
-    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-bottom:8px" id="watch-grid"></div>
+    <div class="watch-grid" id="watch-grid"></div>
   </div>
   <div class="g2">
     <div class="card">
@@ -451,7 +449,7 @@
         <div class="fg"><label class="fl">Miktar</label><input id="w-qty" type="number" placeholder="0"></div>
         <div class="fg"><label class="fl">Alış (₺)</label><input id="w-buy" type="number" placeholder="0"></div>
       </div>
-      <button class="btn bacc2" onclick="addWatch()">Favoriye Ekle</button>
+      <button class="btn bacc2" data-action="addWatch">Favoriye Ekle</button>
     </div>
     <div class="card"><div class="ct">Portföy Özeti</div><div id="watch-summary"></div></div>
   </div>
@@ -461,13 +459,13 @@
 <div class="page" id="page-transactions">
   <div class="topbar"><div><h1>İşlemler</h1></div></div>
   <div class="card">
-    <div style="display:flex;gap:7px;margin-bottom:13px;flex-wrap:wrap;">
-      <select id="f-type" style="width:110px" onchange="filterTx()"><option value="all">Tümü</option><option value="gelir">Gelir</option><option value="gider">Gider</option></select>
-      <select id="f-cat" style="width:130px" onchange="filterTx()"><option value="all">Kategori</option><option>Market</option><option>Fatura</option><option>Ulaşım</option><option>Eğlence</option><option>Yemek</option><option>Sağlık</option><option>Maaş</option><option>Freelance</option></select>
-      <input id="f-q" type="text" placeholder="Ara..." style="flex:1;min-width:110px" oninput="filterTx()">
+    <div class="tx-filter-row">
+      <select id="f-type" class="sel-type" data-change-action="filterTx"><option value="all">Tümü</option><option value="gelir">Gelir</option><option value="gider">Gider</option></select>
+      <select id="f-cat" class="sel-cat" data-change-action="filterTx"><option value="all">Kategori</option><option>Market</option><option>Fatura</option><option>Ulaşım</option><option>Eğlence</option><option>Yemek</option><option>Sağlık</option><option>Maaş</option><option>Freelance</option></select>
+      <input id="f-q" type="text" placeholder="Ara..." class="input-query" data-input-action="filterTx">
     </div>
     <div id="tx-list"></div>
-    <div style="font-size:11px;color:var(--text3);text-align:right;margin-top:7px" id="tx-count"></div>
+    <div class="u-muted-11 u-text-right tx-count" id="tx-count"></div>
   </div>
 </div>
 
@@ -475,9 +473,9 @@
 <div class="page" id="page-banks">
   <div class="topbar"><div><h1>Bankalar</h1></div></div>
   <div class="tabs">
-    <div class="tab active" data-btab="accounts" onclick="switchBTab('accounts')">Hesaplar</div>
-    <div class="tab" data-btab="monthly" onclick="switchBTab('monthly')">Aylık Özet</div>
-    <div class="tab" data-btab="credit" onclick="switchBTab('credit')">Kredi & Eksi Bakiye</div>
+    <div class="tab active" data-btab="accounts" data-action="switchBTab" data-args="'accounts'">Hesaplar</div>
+    <div class="tab" data-btab="monthly" data-action="switchBTab" data-args="'monthly'">Aylık Özet</div>
+    <div class="tab" data-btab="credit" data-action="switchBTab" data-args="'credit'">Kredi & Eksi Bakiye</div>
   </div>
   <div id="bt-accounts">
     <div class="g2">
@@ -494,18 +492,18 @@
           <div class="fg"><label class="fl">Faiz Oranı (%)</label><input id="nb-rate" type="number" step="0.01" placeholder="0.00"></div>
           <div class="fg"><label class="fl">Gecikme Faizi (%)</label><input id="nb-late" type="number" step="0.01" placeholder="0.00"></div>
         </div>
-        <button class="btn bacc2" onclick="addBankAcc()">Hesap Ekle</button>
+        <button class="btn bacc2" data-action="addBankAcc">Hesap Ekle</button>
       </div>
     </div>
   </div>
   <div id="bt-monthly" style="display:none">
     <div class="card">
       <div class="ct">Aylık Hesap Özeti</div>
-      <div class="fg"><label class="fl">Hesap</label><select id="monthly-sel" onchange="renderMonthlyTbl()"></select></div>
+      <div class="fg"><label class="fl">Hesap</label><select id="monthly-sel" data-change-action="renderMonthlyTbl"></select></div>
       <div style="overflow-x:auto"><table class="fc-tbl" id="monthly-tbl"></table></div>
-      <button class="btn bacc2" style="width:auto;padding:8px 18px;margin-top:10px" onclick="saveMonthly()">Kaydet</button>
+      <button class="btn bacc2" style="width:auto;padding:8px 18px;margin-top:10px" data-action="saveMonthly">Kaydet</button>
     </div>
-    <div class="card" style="margin-top:13px"><div class="ct">Kapanış Bakiyesi Grafiği</div><div id="monthly-chart" style="height:110px;display:flex;align-items:flex-end;gap:8px;padding-bottom:20px"></div></div>
+    <div class="card u-mt-10"><div class="ct">Kapanış Bakiyesi Grafiği</div><div id="monthly-chart" class="chart-wrap-sm"></div></div>
   </div>
   <div id="bt-credit" style="display:none">
     <div class="g2">
@@ -519,7 +517,7 @@
         </div>
         <div class="fg"><label class="fl">Mevcut Bakiye (₺)</label><input id="cr-bal" type="number" placeholder="-2840"></div>
         <div class="fg"><label class="fl">Son Ödeme</label><input id="cr-due" type="date"></div>
-        <button class="btn bacc2" onclick="saveCreditInfo()">Güncelle</button>
+        <button class="btn bacc2" data-action="saveCreditInfo">Güncelle</button>
         <div class="div"></div>
         <div id="cr-calc" style="font-size:12px;color:var(--text2);line-height:1.7"></div>
       </div>
@@ -532,14 +530,14 @@
   <div class="topbar"><div><h1>Yatırım Hesapları</h1></div></div>
   <div class="g2">
     <div>
-      <div class="card" style="margin-bottom:13px"><div class="ct">Hesaplarım</div><div id="inv-list"></div></div>
+      <div class="card u-mb-13"><div class="ct">Hesaplarım</div><div id="inv-list"></div></div>
     </div>
     <div>
-      <div class="card" style="margin-bottom:13px">
+      <div class="card u-mb-13">
         <div class="ct">Fon / Hisse / Kağıt Ara</div>
-        <div style="display:flex;gap:7px;margin-bottom:10px">
-          <input id="fund-q" placeholder="Fon adı, kod (TFF1F, TL30)..." style="flex:1" oninput="searchFund()">
-          <button class="btn bghost bsm" onclick="searchFund()">Ara</button>
+        <div class="u-flex u-gap-8 u-mb-10">
+          <input id="fund-q" placeholder="Fon adı, kod (TFF1F, TL30)..." class="u-full" data-input-action="searchFund">
+          <button class="btn bghost bsm" data-action="searchFund">Ara</button>
         </div>
         <div id="fund-results"></div>
       </div>
@@ -561,7 +559,7 @@
           <div class="fg"><label class="fl">Miktar / Birim</label><input id="inv-qty" type="number" placeholder="0"></div>
           <div class="fg"><label class="fl">Yıllık Getiri (%)</label><input id="inv-ret" type="number" step="0.1" placeholder="0.0"></div>
         </div>
-        <button class="btn bacc2" onclick="addInv()">Hesap Ekle</button>
+        <button class="btn bacc2" data-action="addInv">Hesap Ekle</button>
       </div>
     </div>
   </div>
@@ -570,19 +568,19 @@
 <!-- CRYPTO -->
 <div class="page" id="page-crypto">
   <div class="topbar"><div><h1>Kripto</h1><p>Canlı fiyat · CoinGecko API</p></div>
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn bghost bsm" onclick="refreshCrypto()" id="refresh-btn">↻ Yenile</button>
-      <span id="crypto-updated" style="font-size:11px;color:var(--text3)"></span>
+    <div class="u-flex u-gap-8">
+      <button class="btn bghost bsm" data-action="refreshCrypto" id="refresh-btn">↻ Yenile</button>
+      <span id="crypto-updated" class="u-muted-11"></span>
     </div>
   </div>
   <div class="tabs">
-    <div class="tab active" data-ctab="portfolio" onclick="switchCTab('portfolio')">Portföyüm</div>
-    <div class="tab" data-ctab="add-coin" onclick="switchCTab('add-coin')">Coin Ekle</div>
+    <div class="tab active" data-ctab="portfolio" data-action="switchCTab" data-args="'portfolio'">Portföyüm</div>
+    <div class="tab" data-ctab="add-coin" data-action="switchCTab" data-args="'add-coin'">Coin Ekle</div>
   </div>
   <div id="ct-portfolio">
     <div class="g2">
       <div class="card">
-        <div class="ct">Kripto Portföy <span id="crypto-total-val" style="color:var(--accent);font-size:12px;margin-left:6px"></span></div>
+        <div class="ct">Kripto Portföy <span id="crypto-total-val" class="crypto-total-val"></span></div>
         <div id="crypto-list"></div>
       </div>
       <div class="card">
@@ -599,23 +597,23 @@
     <div class="g2">
       <div class="card">
         <div class="ct">Coin Ekle</div>
-        <div style="display:flex;gap:7px;margin-bottom:9px">
-          <input id="add-coin-q" placeholder="BTC, ETH, XRP, SOL..." style="flex:1" oninput="searchAddCoin()">
+        <div class="u-flex u-gap-8 u-mb-8">
+          <input id="add-coin-q" placeholder="BTC, ETH, XRP, SOL..." class="u-full" data-input-action="searchAddCoin">
           <button class="btn bghost bsm">Ara</button>
         </div>
         <div id="add-coin-res" style="max-height:200px;overflow-y:auto"></div>
       </div>
       <div class="card">
         <div class="ct">Seçilen Coin Detayları</div>
-        <div id="selected-coin-detail" style="font-size:13px;color:var(--text3)">Coin arayıp seçin</div>
+        <div id="selected-coin-detail" class="u-muted-12">Coin arayıp seçin</div>
         <div id="selected-coin-form" style="display:none">
-          <div class="fg2" style="margin-top:10px">
-            <div class="fg"><label class="fl">Adet</label><input id="new-coin-qty" type="number" placeholder="0" oninput="calcNewCoinValue()"></div>
+          <div class="fg2 u-mt-10">
+            <div class="fg"><label class="fl">Adet</label><input id="new-coin-qty" type="number" placeholder="0" data-input-action="calcNewCoinValue"></div>
             <div class="fg"><label class="fl">Alış (USDT)</label><input id="new-coin-buy" type="number" step="0.0001" placeholder="0.00"></div>
           </div>
-          <div style="background:var(--bg3);border-radius:var(--rs);padding:9px 11px;margin-bottom:9px;font-size:12.5px" id="new-coin-preview"></div>
+          <div class="coin-preview" id="new-coin-preview"></div>
           <div class="fg"><label class="fl">Borsa</label><select id="new-coin-exch"><option>Binance</option><option>Bybit</option><option>OKX</option><option>Paribu</option><option>BtcTürk</option><option>Soğuk Cüzdan</option></select></div>
-          <button class="btn bacc2" onclick="addNewCoin()">Portföye Ekle</button>
+          <button class="btn bacc2" data-action="addNewCoin">Portföye Ekle</button>
         </div>
       </div>
     </div>
@@ -630,27 +628,27 @@
   <div id="gcal-events" style="margin-bottom:12px"></div>
   <div class="g2">
     <div>
-      <div class="card" style="margin-bottom:12px"><div class="ct">Bekleyen</div><div id="bills-list"></div></div>
+    <div class="card u-mb-12"><div class="ct">Bekleyen</div><div id="bills-list"></div></div>
       <div class="card"><div class="ct">Ödenen</div><div id="paid-bills"></div></div>
     </div>
     <div>
-      <div class="card" style="margin-bottom:12px">
+      <div class="card u-mb-12">
         <div class="ct">Fatura Ekle + Takvim</div>
         <div class="fg"><label class="fl">Ad</label><input id="bill-nm" placeholder="Elektrik..."></div>
         <div class="fg2">
           <div class="fg"><label class="fl">Tutar (₺)</label><input id="bill-am" type="number" placeholder="0"></div>
           <div class="fg"><label class="fl">Son Ödeme</label><input id="bill-dt" type="date"></div>
         </div>
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:9px">
-          <input type="checkbox" id="bill-cal" checked style="width:auto;cursor:pointer">
-          <label for="bill-cal" style="font-size:12px;color:var(--text2);cursor:pointer">📅 Google Takvime ekle (bildirim ile)</label>
+        <div class="u-flex u-gap-8 u-mb-8">
+          <input type="checkbox" id="bill-cal" checked class="bill-check">
+          <label for="bill-cal" class="u-muted-12 bill-check-label">📅 Google Takvime ekle (bildirim ile)</label>
         </div>
-        <button class="btn bacc2" onclick="saveBill()">Kaydet & Takvime Ekle</button>
-        <div id="bill-res" style="margin-top:7px;font-size:12px;color:var(--teal)"></div>
+        <button class="btn bacc2" data-action="saveBill">Kaydet & Takvime Ekle</button>
+        <div id="bill-res" class="u-mt-10 bill-res"></div>
       </div>
       <div class="card">
         <div class="ct">Fatura Fotoğrafı (OCR)</div>
-        <div class="upzone" onclick="simOCR()">
+        <div class="upzone" data-action="simOCR">
           <div style="font-size:22px;margin-bottom:5px">📎</div>
           <div style="font-size:12.5px;color:var(--text2)">Tıkla veya sürükle</div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px">JPG, PNG, PDF</div>
@@ -667,14 +665,14 @@
   <div class="g2">
     <div class="card"><div class="ct">Bu Ayın Durumu</div><div id="budget-bars"></div></div>
     <div>
-      <div class="card" style="margin-bottom:12px">
+      <div class="card u-mb-12">
         <div class="ct">Hedef Ekle</div>
         <div class="fg"><label class="fl">Kategori</label><select id="g-cat"><option>Market</option><option>Fatura</option><option>Eğlence</option><option>Ulaşım</option><option>Yemek</option><option>Sağlık</option></select></div>
         <div class="fg2">
           <div class="fg"><label class="fl">Limit (₺)</label><input id="g-lim" type="number" placeholder="2000"></div>
           <div class="fg"><label class="fl">Uyarı (%)</label><input id="g-thr" type="number" value="80"></div>
         </div>
-        <button class="btn bacc2" onclick="showNotif('Hedef kaydedildi','◎')">Kaydet</button>
+        <button class="btn bacc2" data-action="showNotif" data-args="'Hedef kaydedildi','◎'">Kaydet</button>
       </div>
       <div class="card">
         <div class="ct">Finansal Skor</div>
@@ -689,14 +687,14 @@
 <div class="page" id="page-forecast">
   <div class="topbar"><div><h1>Nakit Akışı & Taksitler</h1><p>Kredi kartı taksitlerini gir, aylık nakit akışını gör</p></div></div>
   <div class="tabs">
-    <div class="tab active" data-ftab="installments" onclick="switchFTab('installments')">Taksitli Ödemeler</div>
-    <div class="tab" data-ftab="cashflow" onclick="switchFTab('cashflow')">6 Ay Nakit Akışı</div>
+    <div class="tab active" data-ftab="installments" data-action="switchFTab" data-args="'installments'">Taksitli Ödemeler</div>
+    <div class="tab" data-ftab="cashflow" data-action="switchFTab" data-args="'cashflow'">6 Ay Nakit Akışı</div>
   </div>
   <!-- TAKSİTLER -->
   <div id="ft-installments">
     <div class="g2">
       <div>
-        <div class="card" style="margin-bottom:13px"><div class="ct">Aktif Taksitler</div><div id="inst-list"></div></div>
+        <div class="card u-mb-13"><div class="ct">Aktif Taksitler</div><div id="inst-list"></div></div>
         <div class="card"><div class="ct">Aylık Taksit Toplamı</div><div id="inst-monthly-total" style="font-family:var(--mono);font-size:22px;color:var(--red);margin-top:4px"></div><div style="font-size:11.5px;color:var(--text3);margin-top:5px" id="inst-monthly-sub"></div></div>
       </div>
       <div class="card">
@@ -705,8 +703,8 @@
         <div class="fg"><label class="fl">Kredi Kartı</label>
           <select id="ni-card"><option>Garanti BBVA</option><option>İş Bankası</option><option>Akbank</option><option>Yapı Kredi</option></select></div>
         <div class="fg2">
-          <div class="fg"><label class="fl">Toplam Tutar (₺)</label><input id="ni-total" type="number" placeholder="0" oninput="calcInstallment()"></div>
-          <div class="fg"><label class="fl">Taksit Sayısı</label><input id="ni-count" type="number" placeholder="12" min="1" oninput="calcInstallment()"></div>
+          <div class="fg"><label class="fl">Toplam Tutar (₺)</label><input id="ni-total" type="number" placeholder="0" data-input-action="calcInstallment"></div>
+          <div class="fg"><label class="fl">Taksit Sayısı</label><input id="ni-count" type="number" placeholder="12" min="1" data-input-action="calcInstallment"></div>
         </div>
         <div class="fg2">
           <div class="fg"><label class="fl">Kalan Taksit</label><input id="ni-rem" type="number" placeholder="12" min="1"></div>
@@ -716,18 +714,18 @@
           <div class="fg"><label class="fl">Faiz Oranı (% yıllık)</label><input id="ni-rate" type="number" step="0.01" placeholder="0"></div>
           <div class="fg"><label class="fl">Aylık Taksit (₺)</label><input id="ni-monthly" readonly placeholder="Otomatik" style="background:var(--bg4);color:var(--accent);font-family:var(--mono)"></div>
         </div>
-        <button class="btn bacc2" onclick="addInstallment()">Taksit Ekle</button>
+        <button class="btn bacc2" data-action="addInstallment">Taksit Ekle</button>
       </div>
     </div>
   </div>
   <!-- CASHFLOW -->
   <div id="ft-cashflow" style="display:none">
-    <div class="card" style="margin-bottom:13px">
+    <div class="card u-mb-13">
       <div class="ct">6 Aylık Nakit Akışı (Taksitler dahil)</div>
       <div style="overflow-x:auto"><table class="fc-tbl" id="cashflow-tbl"></table></div>
-      <button class="btn bacc2" style="width:auto;padding:7px 16px;margin-top:10px" onclick="calcCashflow()">Hesapla & Güncelle</button>
+      <button class="btn bacc2" style="width:auto;padding:7px 16px;margin-top:10px" data-action="calcCashflow">Hesapla & Güncelle</button>
     </div>
-    <div class="card"><div class="ct">Grafik</div><div id="cashflow-chart" style="height:120px;display:flex;align-items:flex-end;gap:8px;padding-bottom:22px"></div></div>
+    <div class="card"><div class="ct">Grafik</div><div id="cashflow-chart" class="chart-wrap-md"></div></div>
   </div>
 </div>
 
@@ -736,7 +734,7 @@
   <div class="topbar"><div><h1>AI Finans Danışmanı</h1></div></div>
   <div class="g3r">
     <div>
-      <div class="card" style="margin-bottom:12px"><div class="ct">Hızlı Sorular</div><div id="quick-btns"></div></div>
+      <div class="card u-mb-12"><div class="ct">Hızlı Sorular</div><div id="quick-btns"></div></div>
       <div class="card"><div class="ct">Finansal Skor</div>
         <div class="score-ring"><svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="33" fill="none" stroke="var(--bg4)" stroke-width="7"/><circle cx="40" cy="40" r="33" fill="none" stroke="var(--accent)" stroke-width="7" stroke-dasharray="207.35" stroke-dashoffset="62.2" stroke-linecap="round"/></svg><div class="score-center"><div class="score-num">70</div><div class="score-lbl">/100</div></div></div>
         <div id="ai-score-bars"></div></div>
@@ -744,7 +742,7 @@
     <div class="card"><div class="ct">Claude AI Sohbet</div>
       <div class="chat-wrap">
         <div class="chat-msgs" id="chat-msgs"><div class="msg msg-ai" id="welcome-msg">Merhaba! Banka hesaplarınız, taksitler, kripto portföyünüz ve bütçeniz hakkında sorularınızı yanıtlayabilirim.</div></div>
-        <div class="chat-row"><input id="chat-in" placeholder="Sorunuzu yazın..." onkeydown="if(event.key==='Enter')sendMsg()"><button class="sbtn" id="sbtn" onclick="sendMsg()">→</button></div>
+        <div class="chat-row"><input id="chat-in" placeholder="Sorunuzu yazın..." data-enter-action="sendMsg"><button class="sbtn" id="sbtn" data-action="sendMsg">→</button></div>
       </div>
     </div>
   </div>
@@ -766,12 +764,12 @@
         <div class="fg"><label class="fl">Kategori</label><select id="a-cat"><option>Market</option><option>Fatura</option><option>Ulaşım</option><option>Eğlence</option><option>Yemek</option><option>Sağlık</option><option>Giyim</option><option>Maaş</option><option>Freelance</option></select></div>
         <div class="fg"><label class="fl">Kaynak</label><select id="a-src"><option>Garanti BBVA</option><option>İş Bankası</option><option>Akbank</option><option>Nakit</option></select></div>
       </div>
-      <button class="btn bacc2" onclick="saveTx()">Kaydet</button>
-      <div id="save-ok" style="margin-top:7px;font-size:12px;color:var(--teal);display:none">✓ Kaydedildi!</div>
+      <button class="btn bacc2" data-action="saveTx">Kaydet</button>
+      <div id="save-ok" class="save-ok">✓ Kaydedildi!</div>
     </div>
     <div class="card"><div class="ct">CSV Import</div>
-      <div class="upzone" onclick="simCSV()" style="padding:18px"><div style="font-size:20px;margin-bottom:4px">📊</div><div style="font-size:12.5px;color:var(--text2)">CSV Yükle</div></div>
-      <div id="csv-res" style="margin-top:6px;font-size:12px;color:var(--teal)"></div>
+      <div class="upzone upzone-compact" data-action="simCSV"><div class="upzone-icon">📊</div><div class="u-muted-12">CSV Yükle</div></div>
+      <div id="csv-res" class="csv-res"></div>
     </div>
   </div>
 </div>
@@ -781,94 +779,94 @@
   <div class="topbar"><div><h1>Ayarlar</h1><p>Veri yönetimi ve uygulama tercihleri</p></div></div>
 
   <!-- VERİ TEMİZLEME -->
-  <div class="card" style="margin-bottom:13px">
+  <div class="card u-mb-13">
     <div class="ct">⚠️ Veri Temizleme</div>
-    <p style="font-size:12.5px;color:var(--text3);margin-bottom:14px;line-height:1.7">
+    <p class="settings-help">
       Aşağıdaki butonlar seçili veri grubunu kalıcı olarak siler. Bu işlem geri alınamaz.
     </p>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px" id="clear-btns-grid">
+    <div class="settings-grid" id="clear-btns-grid">
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">⇅</div>
         <div class="settings-clear-label">Tüm İşlemler</div>
         <div class="settings-clear-sub" id="count-transactions">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('transactions')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'transactions'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">📈</div>
         <div class="settings-clear-label">Sadece Gelirler</div>
         <div class="settings-clear-sub" id="count-income">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('income')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'income'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">📉</div>
         <div class="settings-clear-label">Sadece Giderler</div>
         <div class="settings-clear-sub" id="count-expense">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('expense')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'expense'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">🏦</div>
         <div class="settings-clear-label">Banka Hesapları</div>
         <div class="settings-clear-sub" id="count-banks">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('banks')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'banks'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">📊</div>
         <div class="settings-clear-label">Yatırım Hesapları</div>
         <div class="settings-clear-sub" id="count-investments">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('investments')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'investments'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">₿</div>
         <div class="settings-clear-label">Kripto Portföy</div>
         <div class="settings-clear-sub" id="count-crypto">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('crypto')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'crypto'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">🟡</div>
         <div class="settings-clear-label">Binance Portföy</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('bnc')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'bnc'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">📄</div>
         <div class="settings-clear-label">Faturalar</div>
         <div class="settings-clear-sub" id="count-bills">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('bills')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'bills'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">◎</div>
         <div class="settings-clear-label">Bütçe Kalemleri</div>
         <div class="settings-clear-sub" id="count-budgets">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('budgets')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'budgets'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">📅</div>
         <div class="settings-clear-label">Taksitler</div>
         <div class="settings-clear-sub" id="count-installments">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('installments')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'installments'">Temizle</button>
       </div>
 
       <div class="settings-clear-card">
         <div class="settings-clear-icon">⭐</div>
         <div class="settings-clear-label">Favoriler (Watchlist)</div>
         <div class="settings-clear-sub" id="count-watch">— kayıt</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px" onclick="clearData('watch')">Temizle</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10" data-action="clearData" data-args="'watch'">Temizle</button>
       </div>
 
-      <div class="settings-clear-card" style="border-color:rgba(255,68,102,0.35);background:var(--red-dim)">
+      <div class="settings-clear-card settings-clear-card-danger">
         <div class="settings-clear-icon">🗑</div>
-        <div class="settings-clear-label" style="color:var(--red)">TÜM VERİLER</div>
+        <div class="settings-clear-label settings-clear-label-danger">TÜM VERİLER</div>
         <div class="settings-clear-sub">Sıfırdan başla</div>
-        <button class="btn bdanger2 bsm" style="width:100%;margin-top:8px;font-weight:700" onclick="clearData('all')">Hepsini Sil</button>
+        <button class="btn bdanger2 bsm u-full u-mt-10 danger-strong" data-action="clearData" data-args="'all'">Hepsini Sil</button>
       </div>
 
     </div>
@@ -878,31 +876,31 @@
   <div class="g2">
     <div class="card">
       <div class="ct">Görünüm</div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border)">
-        <span style="font-size:13px">Tema</span>
-        <div style="display:flex;gap:6px">
-          <button class="btn bghost bsm" onclick="setTheme('dark')" id="theme-dark-btn">🌙 Koyu</button>
-          <button class="btn bghost bsm" onclick="setTheme('light')" id="theme-light-btn">☀️ Açık</button>
+      <div class="settings-row settings-row-divider">
+        <span class="settings-row-label">Tema</span>
+        <div class="u-flex u-gap-6">
+          <button class="btn bghost bsm" data-action="setTheme" data-args="'dark'" id="theme-dark-btn">🌙 Koyu</button>
+          <button class="btn bghost bsm" data-action="setTheme" data-args="'light'" id="theme-light-btn">☀️ Açık</button>
         </div>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0">
-        <span style="font-size:13px">Dil</span>
-        <div style="display:flex;gap:6px">
-          <button class="btn bghost bsm" onclick="setLang('tr')" id="lang-tr-btn2">🇹🇷 Türkçe</button>
-          <button class="btn bghost bsm" onclick="setLang('en')" id="lang-en-btn2">🇬🇧 English</button>
+      <div class="settings-row">
+        <span class="settings-row-label">Dil</span>
+        <div class="u-flex u-gap-6">
+          <button class="btn bghost bsm" data-action="setLang" data-args="'tr'" id="lang-tr-btn2">🇹🇷 Türkçe</button>
+          <button class="btn bghost bsm" data-action="setLang" data-args="'en'" id="lang-en-btn2">🇬🇧 English</button>
         </div>
       </div>
     </div>
 
     <div class="card">
       <div class="ct">Uygulama Bilgisi</div>
-      <div style="font-size:12.5px;color:var(--text2);line-height:2">
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Versiyon</span><span style="font-family:var(--mono)">FinansAI v3.1</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Depolama</span><span style="font-family:var(--mono)" id="storage-size">—</span></div>
-        <div style="display:flex;justify-content:space-between"><span style="color:var(--text3)">Son kayıt</span><span style="font-family:var(--mono)" id="last-save-time">—</span></div>
+      <div class="app-info-list">
+        <div class="app-info-row"><span class="u-muted-11">Versiyon</span><span class="mono">FinansAI v3.1</span></div>
+        <div class="app-info-row"><span class="u-muted-11">Depolama</span><span class="mono" id="storage-size">—</span></div>
+        <div class="app-info-row"><span class="u-muted-11">Son kayıt</span><span class="mono" id="last-save-time">—</span></div>
       </div>
       <div class="div"></div>
-      <button class="btn bghost bsm" style="width:100%" onclick="saveData();showNotif('Manuel kayıt yapıldı','💾')">💾 Manuel Kaydet</button>
+      <button class="btn bghost bsm u-full" data-action="saveDataAndNotify">💾 Manuel Kaydet</button>
     </div>
   </div>
 </div>
@@ -913,25 +911,26 @@
 <div class="notif" id="notif"><span id="n-icon">✓</span><span id="n-txt"></span></div>
 
 <!-- CUSTOM CONFIRM MODAL -->
-<div id="confirm-overlay" style="display:none;position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
-  <div id="confirm-box" style="background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:24px 26px;min-width:320px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.5);animation:fi .18s ease;">
-    <div style="display:flex;align-items:flex-start;gap:13px;margin-bottom:18px">
-      <div id="confirm-icon-wrap" style="width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--red-dim)">
+<div id="confirm-overlay" class="confirm-overlay">
+  <div id="confirm-box" class="confirm-box">
+    <div class="confirm-head">
+      <div id="confirm-icon-wrap" class="confirm-icon-wrap">
         <span id="confirm-icon">🗑</span>
       </div>
       <div>
-        <div id="confirm-title" style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:5px"></div>
-        <div id="confirm-msg" style="font-size:13px;color:var(--text3);line-height:1.65"></div>
+        <div id="confirm-title" class="confirm-title"></div>
+        <div id="confirm-msg" class="confirm-msg"></div>
       </div>
     </div>
-    <div id="confirm-detail" style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:9px 12px;margin-bottom:18px;font-size:12px;color:var(--text2);display:none"></div>
-    <div style="display:flex;gap:8px;justify-content:flex-end">
-      <button id="confirm-cancel-btn" class="btn bghost" style="min-width:80px">İptal</button>
-      <button id="confirm-ok-btn" class="btn bdanger2" style="min-width:100px;font-weight:600">Sil</button>
+    <div id="confirm-detail" class="confirm-detail"></div>
+    <div class="confirm-actions">
+      <button id="confirm-cancel-btn" class="btn bghost confirm-cancel-btn">İptal</button>
+      <button id="confirm-ok-btn" class="btn bdanger2 confirm-ok-btn">Sil</button>
     </div>
   </div>
 </div>
 
-<script src="app.js"></script>
+<script src="./app.js"></script>
+<script type="module" src="./src/main.js"></script>
 </body>
 </html>
