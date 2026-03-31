@@ -11,10 +11,16 @@ const required = [
   "src/core/router.js",
   "src/modules/dashboard.js",
   "src/modules/transactions.js",
+  "src/modules/bills.js",
+  "src/modules/budget.js",
+  "src/services/authService.js",
+  "src/utils/date.js",
+  "src/utils/formatters.js",
   "src/styles/tokens.css",
   "src/styles/base.css",
   "src/styles/components.css",
-  "src/styles/premium-overrides.css"
+  "src/styles/premium-overrides.css",
+  "vitest.config.js"
 ];
 
 const missing = required.filter((file) => !fs.existsSync(path.resolve(process.cwd(), file)));

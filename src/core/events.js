@@ -92,8 +92,10 @@ export function bindDelegatedEvents() {
 
     if (action === "setTheme") {
       const themeArg = actionEl.dataset.args?.replace(/['"]/g, "");
-      if (themeArg) window.setTheme?.(themeArg);
-      appState.preferences.theme = themeArg || appState.preferences.theme;
+      if (themeArg) {
+        document.documentElement.setAttribute("data-theme", themeArg === "light" ? "light" : "");
+        appState.preferences.theme = themeArg;
+      }
       publish();
       return;
     }

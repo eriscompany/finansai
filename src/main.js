@@ -24,8 +24,16 @@ function setupPilotModules() {
   initTransactionsModule(appState);
 }
 
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme === "light" ? "light" : "");
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   Object.assign(appState, loadAppState());
+
+  // Kayıtlı tema tercihini uygula
+  applyTheme(appState.preferences.theme ?? "dark");
+
   migrateInlineHandlers();
   bindDelegatedEvents();
   wireRouter();
