@@ -4,6 +4,7 @@ import { wireRouter } from "./core/router.js";
 import { initDashboardModule } from "./modules/dashboard.js";
 import { initTransactionsModule, setTransactionsFilter } from "./modules/transactions.js";
 import { loadAppState, saveAppState } from "./core/storage.js";
+import { onError } from "./core/errors.js";
 
 function setupPilotModules() {
   const originalShowPage = window.showPage?.bind(window);
@@ -33,6 +34,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Kayıtlı tema tercihini uygula
   applyTheme(appState.preferences.theme ?? "dark");
+
+  // Servis hatalarını kullanıcıya bildirim olarak göster
+  onError(({ message, severity }) => {
+    if (severity === "error" || severity === "warning") {
+      window.showNotif?.(message, severity === "error" ? "⚠" : "ℹ");
+    }
+  });
 
   migrateInlineHandlers();
   bindDelegatedEvents();
