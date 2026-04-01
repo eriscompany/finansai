@@ -2,7 +2,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { initDashboardModule } from "./dashboard.js";
 
-// computeMonthlyTotals window.allTx'i okuduğu için stub gerekiyor
 const CURRENT_MONTH = "2026-04"; // vitest fake timer ile sabitlenecek
 
 beforeEach(() => {
@@ -15,12 +14,33 @@ afterEach(() => {
   delete window.allTx;
 });
 
-function makeDOM(netVal = "₺0", incomeVal = "₺0", expenseVal = "₺0") {
+function makeDOM() {
   document.body.innerHTML = `
     <div id="page-dashboard">
-      <div class="met"><div class="mv">${netVal}</div></div>
-      <div class="met"><div class="mv">${incomeVal}</div></div>
-      <div class="met"><div class="mv">${expenseVal}</div></div>
+      <div class="dash-hero">
+        <div class="dash-hero-left">
+          <div id="dash-net">₺0</div>
+          <div id="dash-net-trend"></div>
+        </div>
+        <div class="dash-hero-right">
+          <div class="dash-stats-row">
+            <div class="dash-stat"><div id="dash-income">₺0</div></div>
+            <div class="dash-stat"><div id="dash-expense">₺0</div></div>
+            <div class="dash-stat"><div id="dash-savings-rate">—</div></div>
+            <div class="dash-stat"><div id="dash-crypto-total">₺—</div></div>
+          </div>
+          <div class="dash-ratio-wrap">
+            <div class="dash-ratio-bar">
+              <div id="dash-ratio-income" style="width:50%"></div>
+              <div id="dash-ratio-expense" style="width:50%"></div>
+            </div>
+            <div class="dash-ratio-labels">
+              <span><span id="dash-ratio-income-pct"></span></span>
+              <span><span id="dash-ratio-expense-pct"></span></span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -30,10 +50,9 @@ describe("initDashboardModule", () => {
     makeDOM();
     window.allTx = [];
     initDashboardModule();
-    const cards = document.querySelectorAll("#page-dashboard .met .mv");
-    expect(cards[0].textContent).toBe("₺0");
-    expect(cards[1].textContent).toBe("₺0");
-    expect(cards[2].textContent).toBe("₺0");
+    expect(document.querySelector("#dash-net").textContent).toBe("₺0");
+    expect(document.querySelector("#dash-income").textContent).toBe("₺0");
+    expect(document.querySelector("#dash-expense").textContent).toBe("₺0");
   });
 
   it("bu ayın gelir ve giderini hesaplar", () => {
@@ -45,10 +64,9 @@ describe("initDashboardModule", () => {
       { amount: -680,  date: "2026-04-12" }, // gider
     ];
     initDashboardModule();
-    const cards = document.querySelectorAll("#page-dashboard .met .mv");
-    expect(cards[1].textContent).toBe("₺21.700"); // gelir
-    expect(cards[2].textContent).toBe("₺1.920");  // gider
-    expect(cards[0].textContent).toBe("₺19.780"); // net
+    expect(document.querySelector("#dash-income").textContent).toBe("₺21.700"); // gelir
+    expect(document.querySelector("#dash-expense").textContent).toBe("₺1.920");  // gider
+    expect(document.querySelector("#dash-net").textContent).toBe("₺19.780");    // net
   });
 
   it("geçen ayın işlemlerini saymaz", () => {
@@ -58,8 +76,7 @@ describe("initDashboardModule", () => {
       { amount: 5000,  date: "2026-04-01" }, // bu ay
     ];
     initDashboardModule();
-    const cards = document.querySelectorAll("#page-dashboard .met .mv");
-    expect(cards[1].textContent).toBe("₺5.000");
+    expect(document.querySelector("#dash-income").textContent).toBe("₺5.000");
   });
 
   it("gelecek ayın işlemlerini saymaz", () => {
@@ -69,8 +86,7 @@ describe("initDashboardModule", () => {
       { amount: 3000,  date: "2026-04-20" }, // bu ay
     ];
     initDashboardModule();
-    const cards = document.querySelectorAll("#page-dashboard .met .mv");
-    expect(cards[1].textContent).toBe("₺3.000");
+    expect(document.querySelector("#dash-income").textContent).toBe("₺3.000");
   });
 
   it("sayfa yoksa sessizce çıkar", () => {
@@ -86,7 +102,36 @@ describe("initDashboardModule", () => {
       { amount: -3000, date: "2026-04-05" },
     ];
     initDashboardModule();
-    const cards = document.querySelectorAll("#page-dashboard .met .mv");
-    expect(cards[0].textContent).toBe("₺7.000");
+    expect(document.querySelector("#dash-net").textContent).toBe("₺7.000");
+  });
+
+  it("tasarruf oranı hesaplanır", () => {
+    makeDOM();
+    window.allTx = [
+      { amount: 10000, date: "2026-04-01" },
+      { amount: -3000, date: "2026-04-05" },
+    ];
+    initDashboardModule();
+    // net = 7000, income = 10000 → oran = %70.0
+    expect(document.querySelector("#dash-savings-rate").textContent).toBe("%70.0");
+  });
+
+  it("gelir yoksa tasarruf oranı — gösterir", () => {
+    makeDOM();
+    window.allTx = [];
+    initDashboardModule();
+    expect(document.querySelector("#dash-savings-rate").textContent).toBe("—");
+  });
+
+  it("ratio bar gelir > gider ise income > 50%", () => {
+    makeDOM();
+    window.allTx = [
+      { amount: 8000, date: "2026-04-01" },
+      { amount: -2000, date: "2026-04-05" },
+    ];
+    initDashboardModule();
+    const incomeBar = document.querySelector("#dash-ratio-income");
+    const pct = parseInt(incomeBar.style.width);
+    expect(pct).toBeGreaterThan(50);
   });
 });

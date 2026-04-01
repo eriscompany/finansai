@@ -32,18 +32,40 @@ function computeMonthlyTotals() {
   return { income, expense };
 }
 
+function fmt(n) {
+  return `₺${Math.round(n).toLocaleString("tr-TR")}`;
+}
+
 export function initDashboardModule() {
-  const cards = document.querySelectorAll("#page-dashboard .met");
-  if (!cards.length) return;
+  const page = document.querySelector("#page-dashboard");
+  if (!page) return;
 
   const { income, expense } = computeMonthlyTotals();
   const net = income - expense;
+  const savingsRate = income > 0 ? ((net / income) * 100).toFixed(1) : null;
 
-  const netCard = cards[0]?.querySelector(".mv");
-  const incomeCard = cards[1]?.querySelector(".mv");
-  const expenseCard = cards[2]?.querySelector(".mv");
+  const set = (id, val) => {
+    const el = page.querySelector(id);
+    if (el) el.textContent = val;
+  };
 
-  if (netCard) netCard.textContent = `₺${Math.round(net).toLocaleString("tr-TR")}`;
-  if (incomeCard) incomeCard.textContent = `₺${Math.round(income).toLocaleString("tr-TR")}`;
-  if (expenseCard) expenseCard.textContent = `₺${Math.round(expense).toLocaleString("tr-TR")}`;
+  set("#dash-net", fmt(net));
+  set("#dash-income", fmt(income));
+  set("#dash-expense", fmt(expense));
+  set("#dash-savings-rate", savingsRate !== null ? `%${savingsRate}` : "—");
+
+  // Gelir/Gider oranı çubuğu
+  const total = income + expense;
+  if (total > 0) {
+    const incomePct = Math.round((income / total) * 100);
+    const expensePct = 100 - incomePct;
+
+    const incomeBar = page.querySelector("#dash-ratio-income");
+    const expenseBar = page.querySelector("#dash-ratio-expense");
+    if (incomeBar) incomeBar.style.width = `${incomePct}%`;
+    if (expenseBar) expenseBar.style.width = `${expensePct}%`;
+
+    set("#dash-ratio-income-pct", `%${incomePct}`);
+    set("#dash-ratio-expense-pct", `%${expensePct}`);
+  }
 }
