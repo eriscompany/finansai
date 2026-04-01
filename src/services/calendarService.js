@@ -1,3 +1,5 @@
+import { reportError } from "../core/errors.js";
+
 export async function safeCalendarPost(url, token, body) {
   if (!token) return null;
   try {
@@ -9,9 +11,20 @@ export async function safeCalendarPost(url, token, body) {
       },
       body: JSON.stringify(body)
     });
-    if (!resp.ok) return null;
+    if (!resp.ok) {
+      reportError(`Takvim güncellenemedi (HTTP ${resp.status})`, {
+        source: "calendar",
+        severity: "warning"
+      });
+      return null;
+    }
     return await resp.json();
-  } catch {
+  } catch (cause) {
+    reportError("Takvim servisine erişilemiyor", {
+      source: "calendar",
+      severity: "warning",
+      cause
+    });
     return null;
   }
 }
