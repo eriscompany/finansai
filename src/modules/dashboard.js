@@ -1,14 +1,32 @@
+/**
+ * Dashboard metrik kartlarını günceller.
+ * Veriyi DOM'dan değil, window.allTx'ten okur.
+ */
+
+/**
+ * window.allTx dizisinden bu ayın gelir/gider toplamını hesaplar.
+ * @returns {{ income: number, expense: number }}
+ */
 function computeMonthlyTotals() {
-  const rows = document.querySelectorAll("#tx-list .tx-item .tx-amt");
+  const txs = window.allTx;
+  if (!Array.isArray(txs) || !txs.length) return { income: 0, expense: 0 };
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-indexed
+
   let income = 0;
   let expense = 0;
 
-  rows.forEach((row) => {
-    const raw = row.textContent.replace(/[₺,.\s]/g, "").trim();
-    const sign = row.classList.contains("pos") ? 1 : -1;
-    const value = Math.abs(Number(raw) || 0);
-    if (sign > 0) income += value;
-    else expense += value;
+  txs.forEach((tx) => {
+    const txDate = new Date(`${tx.date}T12:00:00`);
+    if (
+      txDate.getFullYear() !== currentYear ||
+      txDate.getMonth() !== currentMonth
+    ) return;
+
+    if (tx.amount > 0) income += tx.amount;
+    else expense += Math.abs(tx.amount);
   });
 
   return { income, expense };
@@ -24,6 +42,7 @@ export function initDashboardModule() {
   const netCard = cards[0]?.querySelector(".mv");
   const incomeCard = cards[1]?.querySelector(".mv");
   const expenseCard = cards[2]?.querySelector(".mv");
+
   if (netCard) netCard.textContent = `₺${Math.round(net).toLocaleString("tr-TR")}`;
   if (incomeCard) incomeCard.textContent = `₺${Math.round(income).toLocaleString("tr-TR")}`;
   if (expenseCard) expenseCard.textContent = `₺${Math.round(expense).toLocaleString("tr-TR")}`;
