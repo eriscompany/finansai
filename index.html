@@ -421,12 +421,59 @@
 <!-- DASHBOARD -->
 <div class="page active" id="page-dashboard">
   <div class="topbar"><div><h1>Genel Bakış</h1><p id="dash-date"></p></div><div id="dash-alerts"></div></div>
-  <div class="mg">
-    <div class="met g"><div class="ml">Net Bakiye</div><div class="mv">₺47.250</div><div class="ms mu">↑ ₺1.800 bu ay</div></div>
-    <div class="met b"><div class="ml">Bu Ay Gelir</div><div class="mv" style="color:var(--teal)">₺21.700</div><div class="ms">3 kaynak</div></div>
-    <div class="met r"><div class="ml">Bu Ay Gider</div><div class="mv" style="color:var(--red)">₺14.820</div><div class="ms mw">↑ %8</div></div>
-    <div class="met p"><div class="ml">Kripto Portföy</div><div class="mv" style="color:var(--purple)" id="dash-crypto-total">₺—</div><div class="ms">Yükleniyor...</div></div>
+
+  <!-- Aylık Özet Hero -->
+  <div class="dash-hero">
+    <div class="dash-hero-left">
+      <div class="dash-hero-label">Net Bakiye</div>
+      <div class="dash-hero-num" id="dash-net">₺0</div>
+      <div class="dash-hero-trend" id="dash-net-trend"></div>
+    </div>
+    <div class="dash-hero-right">
+      <div class="dash-stats-row">
+        <div class="dash-stat">
+          <div class="dash-stat-icon" style="background:var(--teal-dim);color:var(--teal)">↑</div>
+          <div>
+            <div class="dash-stat-label">Bu Ay Gelir</div>
+            <div class="dash-stat-val pos" id="dash-income">₺0</div>
+          </div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-icon" style="background:var(--red-dim);color:var(--red)">↓</div>
+          <div>
+            <div class="dash-stat-label">Bu Ay Gider</div>
+            <div class="dash-stat-val neg" id="dash-expense">₺0</div>
+          </div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-icon" style="background:var(--accent-dim);color:var(--accent)">%</div>
+          <div>
+            <div class="dash-stat-label">Tasarruf Oranı</div>
+            <div class="dash-stat-val" style="color:var(--accent)" id="dash-savings-rate">—</div>
+          </div>
+        </div>
+        <div class="dash-stat">
+          <div class="dash-stat-icon" style="background:rgba(159,135,255,.14);color:var(--purple)">◈</div>
+          <div>
+            <div class="dash-stat-label">Kripto Portföy</div>
+            <div class="dash-stat-val" style="color:var(--purple)" id="dash-crypto-total">₺—</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-ratio-wrap">
+        <div class="dash-ratio-bar">
+          <div class="dash-ratio-income" id="dash-ratio-income" style="width:50%"></div>
+          <div class="dash-ratio-expense" id="dash-ratio-expense" style="width:50%"></div>
+        </div>
+        <div class="dash-ratio-labels">
+          <span><span class="dash-ratio-dot" style="background:var(--teal)"></span> Gelir <span class="dash-ratio-pct" id="dash-ratio-income-pct"></span></span>
+          <span><span class="dash-ratio-pct" id="dash-ratio-expense-pct"></span> Gider <span class="dash-ratio-dot" style="background:var(--red)"></span></span>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Ana İçerik -->
   <div class="g3">
     <div class="card"><div class="ct">Son İşlemler</div><div id="dash-tx"></div></div>
     <div>
@@ -436,8 +483,11 @@
   </div>
   <div class="g2">
     <div class="card"><div class="ct">Kripto (Canlı)</div><div id="dash-crypto"></div></div>
-    <div class="card"><div class="ct">AI Anlık Analiz</div><div id="dash-ai-tip" class="u-muted-12 dash-ai-tip"><div class="dots"><span></span><span></span><span></span></div></div>
-      <button class="btn bghost bsm u-mt-10 u-full" data-action="showPage" data-args="'ai'">AI ile konuş →</button></div>
+    <div class="card">
+      <div class="ct">AI Anlık Analiz</div>
+      <div id="dash-ai-tip" class="u-muted-12 dash-ai-tip"><div class="dots"><span></span><span></span><span></span></div></div>
+      <button class="btn bghost bsm u-mt-10 u-full" data-action="showPage" data-args="'ai'">AI ile konuş →</button>
+    </div>
   </div>
 </div>
 
